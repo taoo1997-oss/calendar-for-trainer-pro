@@ -1188,6 +1188,9 @@
     .paywall-price {
       margin-top: 18px; font-size: 1.6rem; font-weight: 800; color: var(--text);
     }
+    .paywall-price span {
+      font-size: 0.95rem; font-weight: 600; color: var(--text-muted);
+    }
     .paywall-price-sub { font-size: 0.74rem; color: var(--text-muted); margin-top: 3px; }
     .paywall-methods { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
     .paywall-method {
@@ -2900,7 +2903,7 @@
       <div class="paywall-scroll">
         <ul class="paywall-feats" id="paywallFeats"></ul>
         <div class="paywall-price" id="paywallPrice">200 ₽</div>
-        <div class="paywall-price-sub" id="paywallPeriod">в месяц · отмена в любой момент</div>
+        <div class="paywall-price-sub" id="paywallPeriod">отмена в любой момент</div>
         <div class="paywall-methods" id="paywallMethods"></div>
         <div class="paywall-legal" id="paywallLegal"></div>
       </div>
@@ -2992,7 +2995,7 @@
   const CONFIG = {
     /* Номер сборки. Меняется при каждой правке — виден внизу Настроек.
        Если на экране старый номер, значит браузер отдаёт кэш, а не новый файл. */
-    BUILD: '2026-09-03 · 63',
+    BUILD: '2026-09-03 · 64',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     DAY_START_HOUR: 8,
@@ -3403,6 +3406,9 @@
     'Бесплатный тариф': 'Free plan',
     'в месяц за Pro': 'per month for Pro',
     'в месяц · отмена в любой момент': 'per month · cancel anytime',
+    'мес': 'mo',
+    'за Pro': 'for Pro',
+    'отмена в любой момент': 'cancel anytime',
     'Действует до': 'Valid until',
     'Тестовый доступ — без срока': 'Test access — no expiry',
     'Доступ без ограничения по сроку': 'Access with no time limit',
@@ -8073,7 +8079,7 @@
           '<span class="sub-status-body">' +
             '<span class="sub-status-plan">' + I18N.t('Бесплатный тариф') + '</span>' +
             '<span class="sub-status-note">' +
-              CONFIG.SUBSCRIPTION.PRICE_RUB + ' ₽ ' + I18N.t('в месяц за Pro') +
+              CONFIG.SUBSCRIPTION.PRICE_RUB + ' ₽/' + I18N.t('мес') + ' ' + I18N.t('за Pro') +
             '</span>' +
           '</span>';
 
@@ -8131,8 +8137,9 @@
         'Поддержка развития приложения'
       ].map(function (f) { return '<li>' + Domain.escapeHtml(I18N.t(f)) + '</li>'; }).join('');
 
-      this.$('paywallPrice').textContent = CONFIG.SUBSCRIPTION.PRICE_RUB + ' ₽';
-      this.$('paywallPeriod').textContent = I18N.t('в месяц · отмена в любой момент');
+      this.$('paywallPrice').innerHTML =
+        CONFIG.SUBSCRIPTION.PRICE_RUB + ' ₽<span>/' + I18N.t('мес') + '</span>';
+      this.$('paywallPeriod').textContent = I18N.t('отмена в любой момент');
 
       this.$('paywallMethods').innerHTML = CONFIG.SUBSCRIPTION.METHODS.map(function (m) {
         return '<button type="button" class="paywall-method" data-action="paywall-method" data-method="' +
