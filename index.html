@@ -13,8 +13,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="manifest" id="appManifestLink">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💃%3C/text%3E%3C/svg%3E">
-  <title>Танцевальный тренер</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none'%3E%3Crect width='48' height='48' rx='11' fill='%23FDF2F4'/%3E%3Cg transform='translate(0 1)'%3E%3Crect x='9' y='12' width='30' height='27' rx='7' stroke='%231C1917' stroke-width='3.2'/%3E%3Cpath d='M18 8v6.5' stroke='%231C1917' stroke-width='3.2' stroke-linecap='round'/%3E%3Cpath d='M30 8v6.5' stroke='%23E11D48' stroke-width='3.2' stroke-linecap='round'/%3E%3Cpath d='M9 20h30' stroke='%231C1917' stroke-width='3.2'/%3E%3Cpath d='M15 28.5l6 6 12.5-12.5' stroke='%23E11D48' stroke-width='3.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E">
+  <title>CoachCalendar</title>
   <!--
     ============================================================
     ТЕМА ДО ПЕРВОГО КАДРА
@@ -1445,23 +1445,74 @@
     }
     .day-total-detail { font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; }
 
-    /* Заставка. Показывается поверх всего, пока приложение готовится,
-       и мягко исчезает. В APK закрывает белую вспышку при старте. */
+    /* ————— Логотип CoachCalendar ————— */
+    .brand { display: inline-flex; align-items: center; gap: 8px; line-height: 1; margin: 0; }
+    .brand-mark {
+      width: 22px; height: 22px; flex: 0 0 auto; color: var(--text);
+      display: block;
+    }
+    .brand-mark .cc-accent { stroke: var(--primary); }
+    .brand-wm {
+      font-family: var(--font); font-weight: 700; font-size: 0.98rem;
+      letter-spacing: -0.01em; white-space: nowrap; color: var(--primary);
+    }
+    .brand-wm b { font-weight: 700; color: var(--text); }
+    .nav-brand { display: none; }
+
+    /* Заставка. Показывается поверх всего, пока приложение готовится.
+       Когда приложение готово, знак «улетает» на своё место (в меню или
+       шапку), а тёмная подложка растворяется — см. hideSplash(). */
     .splash {
       position: fixed; inset: 0; z-index: 9999;
-      background: #000; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 22px;
-      transition: opacity 0.45s ease, visibility 0.45s ease;
+      display: flex; align-items: center; justify-content: center;
     }
-    .splash.hide { opacity: 0; visibility: hidden; }
-    .splash-mark { width: 92px; height: 92px; animation: splashIn 0.6s ease both; }
+    .splash-bg {
+      position: absolute; inset: 0; background: #12100F;
+      transition: opacity 0.45s ease;
+    }
+    .splash-logo {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column; align-items: center; gap: 20px;
+    }
+    .splash-mark {
+      width: 76px; height: 76px; display: block;
+      transform-origin: center center;
+      animation: splashIn 0.6s ease both;
+    }
     .splash-name {
-      color: #fff; font-size: 1.05rem; font-weight: 500; letter-spacing: 0.08em;
+      font-family: var(--font);
+      color: #FB7185; font-size: 1.15rem; font-weight: 700; letter-spacing: 0.01em;
+      transition: opacity 0.28s ease, transform 0.28s ease;
       animation: splashIn 0.6s ease 0.12s both;
     }
+    .splash-name b { color: #F4F1EE; font-weight: 700; }
+    .splash-mark rect, .splash-mark path { transition: stroke 0.3s ease; }
+    .splash.hide { pointer-events: none; }
+    .splash.hide .splash-bg { opacity: 0; }
+    .splash.hide .splash-name { opacity: 0; transform: translateY(-6px); }
+    /* при уходе знак перекрашивается в цвета темы и бесшовно садится на «настоящий» */
+    .splash.hide .splash-mark rect,
+    .splash.hide .splash-mark path { stroke: var(--text); }
+    .splash.hide .splash-mark [data-draw="3"],
+    .splash.hide .splash-mark [data-draw="5"] { stroke: var(--primary); }
     @keyframes splashIn {
       from { opacity: 0; transform: translateY(8px) scale(0.96); }
       to { opacity: 1; transform: none; }
+    }
+    /* draw-on для знака на заставке */
+    .splash-mark [data-draw] {
+      stroke-dasharray: 1; stroke-dashoffset: 1;
+      animation: ccDraw 0.85s ease forwards;
+    }
+    .splash-mark [data-draw="2"] { animation-delay: 0.10s; }
+    .splash-mark [data-draw="3"] { animation-delay: 0.17s; }
+    .splash-mark [data-draw="4"] { animation-delay: 0.27s; }
+    .splash-mark [data-draw="5"] { animation-delay: 0.37s; }
+    @keyframes ccDraw { to { stroke-dashoffset: 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .splash-mark, .splash-name { animation: none; }
+      .splash-mark [data-draw] { animation: none; stroke-dashoffset: 0; }
+      .splash-mark { transition: none !important; }
     }
 
     .theme-options { display: flex; gap: 8px; }
@@ -1865,8 +1916,12 @@
       padding: 10px; font-size: 0.8rem; color: var(--text-muted);
       background: none; border: none; cursor: pointer;
     }
-    .auth-gate-logo { font-size: 2.2rem; text-align: center; margin-bottom: 8px; }
-    .auth-gate-title { text-align: center; font-size: 1.15rem; font-weight: 600; margin-bottom: 4px; }
+    .auth-gate-logo { display: flex; justify-content: center; margin-bottom: 10px; }
+    .auth-gate-title {
+      text-align: center; font-size: 1.25rem; font-weight: 700; margin-bottom: 4px;
+      letter-spacing: -0.01em; color: var(--primary);
+    }
+    .auth-gate-title b { font-weight: 700; color: var(--text); }
     .auth-gate-sub { text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; }
     .auth-divider {
       display: flex; align-items: center; gap: 10px; margin: 16px 0;
@@ -1946,16 +2001,9 @@
       border-right: 1px solid var(--border);
       overflow-y: auto;
     }
-    [data-device="desktop"] .bottom-nav::before {
-      content: '💃 ' attr(data-brand);
-      display: block;
-      padding: 6px 14px 18px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    [data-device="desktop"] .nav-brand {
+      display: flex;
+      padding: 4px 12px 18px;
     }
     [data-device="desktop"] .nav-item {
       flex: 0 0 auto;
@@ -2210,8 +2258,16 @@
         <button type="button" class="lang-btn" data-action="lang-pick" data-lang-pick="ru">RU</button>
         <button type="button" class="lang-btn" data-action="lang-pick" data-lang-pick="en">EN</button>
       </div>
-      <div class="auth-gate-logo">💃</div>
-      <h1 class="auth-gate-title">Танцевальный тренер</h1>
+      <div class="auth-gate-logo" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:52px;height:52px;color:var(--text)">
+          <rect x="7" y="11" width="34" height="30" rx="7.5" stroke="currentColor" stroke-width="3.4"/>
+          <path d="M17.5 6v7.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+          <path d="M30.5 6v7.5" stroke="var(--primary)" stroke-width="3.4" stroke-linecap="round"/>
+          <path d="M7 20h34" stroke="currentColor" stroke-width="3.4"/>
+          <path d="M13 29l7 7 14.5-14.5" stroke="var(--primary)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1 class="auth-gate-title" data-no-i18n><b>Coach</b>Calendar</h1>
       <p class="auth-gate-sub" id="authGateSub">Создайте профиль, чтобы сохранять клиентов и расписание</p>
       <div class="storage-warn" style="text-align:left;margin-bottom:16px;">
         <strong>Данные хранятся на этом устройстве</strong>
@@ -2285,8 +2341,17 @@
   <div id="appShell">
   <div class="header" id="appHeader">
     <div class="header-titles">
-      <h1 id="appTitle">💃 Танцевальный тренер</h1>
-      <div class="header-sub" id="appSubtitle">Учёт клиентов и занятий</div>
+      <h1 id="appTitle" class="brand" data-no-i18n>
+        <svg class="brand-mark" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="7" y="11" width="34" height="30" rx="7.5" stroke="currentColor" stroke-width="3.4"/>
+          <path d="M17.5 6v7.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+          <path class="cc-accent" d="M30.5 6v7.5" stroke-width="3.4" stroke-linecap="round"/>
+          <path d="M7 20h34" stroke="currentColor" stroke-width="3.4"/>
+          <path class="cc-accent" d="M13 29l7 7 14.5-14.5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="brand-wm"><b>Coach</b>Calendar</span>
+      </h1>
+      <div class="header-sub" id="appSubtitle">Расписание и клиенты</div>
     </div>
     <button type="button" class="btn btn-primary btn-sm header-add" id="headerAdd" data-action="fab-add">+ Добавить</button>
   </div>
@@ -2481,7 +2546,17 @@
 
   <button type="button" class="fab" id="fabMain" data-action="fab-add">+</button>
 
-  <nav class="bottom-nav" id="bottomNav" data-brand="Танцевальный тренер">
+  <nav class="bottom-nav" id="bottomNav">
+    <span class="brand nav-brand" id="navBrand" data-no-i18n>
+      <svg class="brand-mark" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="7" y="11" width="34" height="30" rx="7.5" stroke="currentColor" stroke-width="3.4"/>
+        <path d="M17.5 6v7.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+        <path class="cc-accent" d="M30.5 6v7.5" stroke-width="3.4" stroke-linecap="round"/>
+        <path d="M7 20h34" stroke="currentColor" stroke-width="3.4"/>
+        <path class="cc-accent" d="M13 29l7 7 14.5-14.5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="brand-wm"><b>Coach</b>Calendar</span>
+    </span>
     <button type="button" class="nav-item active" data-tab="schedule"><span class="nav-icon">📅</span>Расписание</button>
     <button type="button" class="nav-item" data-tab="clients"><span class="nav-icon">👥</span>Клиенты</button>
     <button type="button" class="nav-item" data-tab="club"><span class="nav-icon">🏆</span>Клуб</button>
@@ -2536,15 +2611,17 @@
   </div>
 
   <div class="splash" id="splash">
-    <svg class="splash-mark" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="6" y="12" width="52" height="46" rx="12" stroke="#fff" stroke-width="3.5"/>
-      <path d="M6 26h52" stroke="#fff" stroke-width="3.5"/>
-      <path d="M20 6v10M44 6v10" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
-      <circle cx="32" cy="36" r="3.4" fill="#fff"/>
-      <path d="M32 40.5v6m0 0l-5.5 6m5.5-6l5.5 6M25 42.5l7-2 7 2"
-            stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <div class="splash-name">calendar for trainer</div>
+    <div class="splash-bg"></div>
+    <div class="splash-logo" id="splashLogo">
+      <svg class="splash-mark" id="splashMark" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect data-draw="1" x="7" y="11" width="34" height="30" rx="7.5" pathLength="1" stroke="#F4F1EE" stroke-width="3.4"/>
+        <path data-draw="2" d="M17.5 6v7.5" pathLength="1" stroke="#F4F1EE" stroke-width="3.4" stroke-linecap="round"/>
+        <path data-draw="3" d="M30.5 6v7.5" pathLength="1" stroke="#FB7185" stroke-width="3.4" stroke-linecap="round"/>
+        <path data-draw="4" d="M7 20h34" pathLength="1" stroke="#F4F1EE" stroke-width="3.4"/>
+        <path data-draw="5" d="M13 29l7 7 14.5-14.5" pathLength="1" stroke="#FB7185" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="splash-name"><b>Coach</b>Calendar</div>
+    </div>
   </div>
 
   <div class="modal-overlay" id="classModal">
@@ -2995,7 +3072,7 @@
   const CONFIG = {
     /* Номер сборки. Меняется при каждой правке — виден внизу Настроек.
        Если на экране старый номер, значит браузер отдаёт кэш, а не новый файл. */
-    BUILD: '2026-09-03 · 64',
+    BUILD: '2026-09-03 · 65',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     DAY_START_HOUR: 8,
@@ -3417,7 +3494,7 @@
     'Оплата подключается после оформления самозанятости.': 'Payment will be enabled after self-employment registration.',
     'Занятия — без ограничений по дням': 'Classes — no per-day limit',
     'Это потолок бесплатного тарифа.': 'That is the free-plan ceiling.',
-    'Танцевальный тренер': 'Dance Trainer',
+    'Расписание и клиенты': 'Schedule & clients',
     '+ Добавить': '+ Add',
     'Оформить подписку': 'Get subscription',
     'Оформить подписку Pro': 'Get Pro subscription',
@@ -7316,7 +7393,7 @@
       }
 
       var payload = {
-        _subject: 'Танцевальный тренер · ' + data.topic,
+        _subject: 'CoachCalendar · ' + data.topic,
         _template: 'table',
         _captcha: 'false',
         /* FormSubmit ставит Reply-To по полю email — ответ уйдёт человеку. */
@@ -7376,7 +7453,7 @@
     /** Письмо руками: ссылка mailto: с уже подставленным текстом. */
     mailtoUrl(data) {
       return 'mailto:' + CONFIG.FEEDBACK_EMAIL +
-        '?subject=' + encodeURIComponent('Танцевальный тренер · ' + data.topic) +
+        '?subject=' + encodeURIComponent('CoachCalendar · ' + data.topic) +
         '&body=' + encodeURIComponent(this.composeBody(data));
     },
 
@@ -7972,13 +8049,10 @@
         }));
       } catch (e) { /* приватный режим — просто останемся без ускорения */ }
 
-      this.$('appTitle').textContent = s.calendarName ? '💃 ' + s.calendarName : '💃 Танцевальный тренер';
-      // Заголовок бокового меню на десктопе (::before у .bottom-nav).
-      var bn = this.$('bottomNav');
-      if (bn) bn.dataset.brand = s.calendarName || I18N.t('Танцевальный тренер');
-      var uname = (State.currentUser && State.currentUser.name) || s.profileName || '';
-      var ulogin = (State.currentUser && State.currentUser.login) || s.profilePhone || '';
-      this.$('appSubtitle').textContent = uname ? (uname + (ulogin ? ' · ' + ulogin : '')) : 'Учёт клиентов и занятий';
+      // Логотип CoachCalendar в шапке / боковом меню статичен (это позиция ①).
+      // В подзаголовок кладём имя календаря пользователя — это позиция ②.
+      this.$('appSubtitle').textContent = s.calendarName || I18N.t('Расписание и клиенты');
+      try { document.title = s.calendarName ? s.calendarName + ' — CoachCalendar' : 'CoachCalendar'; } catch (e) {}
       this.$('settingCalendarName').value = s.calendarName || '';
       // тему рисуют кнопки выбора, отдельного переключателя больше нет
       this.$('settingColor').value = s.primary || '#e11d48';
@@ -9102,7 +9176,7 @@
     SLIDES: {
       ru: [
         {
-          icon: '💃',
+          icon: '👋',
           title: 'Добро пожаловать!',
           text: 'Это ваш журнал занятий: расписание, клиенты, абонементы и деньги — в одном месте. Пара минут, и вы всё знаете.'
         },
@@ -9134,7 +9208,7 @@
       ],
       en: [
         {
-          icon: '💃',
+          icon: '👋',
           title: 'Welcome!',
           text: 'This is your teaching log: schedule, clients, class passes and money in one place. Two minutes and you will know your way around.'
         },
@@ -10935,7 +11009,7 @@
         }
         if (choice === 'copy') {
           var text = CONFIG.FEEDBACK_EMAIL + '\n' +
-            'Тема: Танцевальный тренер · ' + data.topic + '\n\n' +
+            'Тема: CoachCalendar · ' + data.topic + '\n\n' +
             Feedback.composeBody(data);
           Feedback.copy(text).then(function (ok) {
             UI.showToast(ok ? 'Письмо скопировано' : 'Скопировать не удалось');
@@ -10978,7 +11052,7 @@
     try {
       var bv = document.getElementById('buildVersion');
       if (bv) bv.textContent = 'сборка ' + CONFIG.BUILD;
-      console.log('[Танцевальный тренер] сборка ' + CONFIG.BUILD);
+      console.log('[CoachCalendar] build ' + CONFIG.BUILD);
       /* Ручка для автотестов и разбора проблем: из консоли браузера
          доступно window.__dt.State / .Services / .Domain / .UI */
       try {
@@ -11308,13 +11382,13 @@
        видна на экране и остаётся в консоли — с ней можно прийти и починить. */
     window.addEventListener('error', function (e) {
       try {
-        console.error('[Танцевальный тренер]', e.error || e.message);
+        console.error('[CoachCalendar]', e.error || e.message);
         UI.showToast('Сбой: ' + ((e.error && e.error.message) || e.message || 'неизвестно'));
       } catch (err) {}
     });
     window.addEventListener('unhandledrejection', function (e) {
       try {
-        console.error('[Танцевальный тренер] promise', e.reason);
+        console.error('[CoachCalendar] promise', e.reason);
         UI.showToast('Сбой: ' + ((e.reason && e.reason.message) || 'операция прервана'));
       } catch (err) {}
     });
@@ -11438,12 +11512,50 @@
     (function hideSplash() {
       var sp = document.getElementById('splash');
       if (!sp) return;
-      var MIN_MS = 400, MAX_MS = 4000;
+      var MIN_MS = 900, MAX_MS = 4000;
       var t0 = Date.now();
-      function done() {
-        sp.classList.add('hide');
-        setTimeout(function () { if (sp.parentNode) sp.parentNode.removeChild(sp); }, 600);
+
+      function remove() {
+        var hm = document.querySelector('#navBrand .brand-mark, #appTitle .brand-mark');
+        if (hm) hm.style.visibility = '';
+        if (sp.parentNode) sp.parentNode.removeChild(sp);
       }
+
+      function done() {
+        var mark = document.getElementById('splashMark');
+        var reduce = false;
+        try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+
+        /* Куда лететь: знак логотипа на своём месте — позиция ① со скрина.
+           На десктопе это боковое меню, на телефоне — шапка. */
+        var device = document.documentElement.getAttribute('data-device');
+        var homeWrap = device === 'desktop'
+          ? document.getElementById('navBrand')
+          : document.getElementById('appTitle');
+        var homeMark = homeWrap && homeWrap.querySelector('.brand-mark');
+
+        var mr = mark && mark.getBoundingClientRect();
+        var hr = homeMark && homeMark.getBoundingClientRect();
+        var canFly = !reduce && mr && hr && mr.width > 4 && hr.width > 4;
+
+        if (canFly) {
+          var dx = (hr.left + hr.width / 2) - (mr.left + mr.width / 2);
+          var dy = (hr.top + hr.height / 2) - (mr.top + mr.height / 2);
+          var scale = hr.width / mr.width;
+          homeMark.style.visibility = 'hidden'; // чтобы не двоилось в полёте
+          mark.style.transition = 'transform 0.55s cubic-bezier(0.4, 0, 0.2, 1)';
+          requestAnimationFrame(function () {
+            mark.style.transform =
+              'translate(' + dx + 'px,' + dy + 'px) scale(' + scale + ')';
+          });
+          setTimeout(function () { sp.classList.add('hide'); }, 130);
+          setTimeout(remove, 720);
+        } else {
+          sp.classList.add('hide');
+          setTimeout(remove, 560);
+        }
+      }
+
       function tick() {
         var waited = Date.now() - t0;
         /* Готовность = первый экран отрисован и тема применена.
@@ -11629,14 +11741,14 @@
 
   function setupPwaManifest() {
     try {
-      var icon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💃%3C/text%3E%3C/svg%3E";
+      var icon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none'%3E%3Crect width='48' height='48' rx='11' fill='%23FDF2F4'/%3E%3Cg transform='translate(0 1)'%3E%3Crect x='9' y='12' width='30' height='27' rx='7' stroke='%231C1917' stroke-width='3.2'/%3E%3Cpath d='M18 8v6.5' stroke='%231C1917' stroke-width='3.2' stroke-linecap='round'/%3E%3Cpath d='M30 8v6.5' stroke='%23E11D48' stroke-width='3.2' stroke-linecap='round'/%3E%3Cpath d='M9 20h30' stroke='%231C1917' stroke-width='3.2'/%3E%3Cpath d='M15 28.5l6 6 12.5-12.5' stroke='%23E11D48' stroke-width='3.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E";
       var manifest = {
-        name: 'Танцевальный тренер',
-        short_name: 'Танцы',
-        description: 'Учёт клиентов и занятий танцевального тренера',
+        name: 'CoachCalendar',
+        short_name: 'CoachCalendar',
+        description: 'Расписание, клиенты и оплаты для тренера',
         start_url: '.',
         display: 'standalone',
-        background_color: '#fdf2f4',
+        background_color: '#12100f',
         theme_color: '#e11d48',
         icons: [
           { src: icon, sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }
