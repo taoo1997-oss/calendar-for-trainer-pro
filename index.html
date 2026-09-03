@@ -3072,7 +3072,7 @@
   const CONFIG = {
     /* Номер сборки. Меняется при каждой правке — виден внизу Настроек.
        Если на экране старый номер, значит браузер отдаёт кэш, а не новый файл. */
-    BUILD: '2026-09-03 · 65',
+    BUILD: '2026-09-03 · 66',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     DAY_START_HOUR: 8,
@@ -8049,10 +8049,9 @@
         }));
       } catch (e) { /* приватный режим — просто останемся без ускорения */ }
 
-      // Логотип CoachCalendar в шапке / боковом меню статичен (это позиция ①).
-      // В подзаголовок кладём имя календаря пользователя — это позиция ②.
-      this.$('appSubtitle').textContent = s.calendarName || I18N.t('Расписание и клиенты');
-      try { document.title = s.calendarName ? s.calendarName + ' — CoachCalendar' : 'CoachCalendar'; } catch (e) {}
+      // Логотип CoachCalendar в шапке / боковом меню статичен (позиция ①).
+      // В подзаголовок (позиция ②) кладём название открытого раздела.
+      this.updateHeaderTitle();
       this.$('settingCalendarName').value = s.calendarName || '';
       // тему рисуют кнопки выбора, отдельного переключателя больше нет
       this.$('settingColor').value = s.primary || '#e11d48';
@@ -8253,6 +8252,23 @@
         catch (e) { window.scrollTo(0, 0); }
       }
     },
+    /* Позиция ② — подзаголовок в шапке: дублирует название открытого раздела.
+       Строки те же, что на кнопках меню, поэтому I18N их уже знает. */
+    _sectionTitles: {
+      schedule: 'Расписание', clients: 'Клиенты', club: 'Клуб', settings: 'Настройки'
+    },
+    updateHeaderTitle(tab) {
+      if (!tab) {
+        var a = document.querySelector('.nav-item.active');
+        tab = a ? a.dataset.tab : 'schedule';
+      }
+      var el = this.$('appSubtitle');
+      if (el) el.textContent = I18N.t(this._sectionTitles[tab] || this._sectionTitles.schedule);
+      try {
+        var name = I18N.t(this._sectionTitles[tab] || this._sectionTitles.schedule);
+        document.title = name + ' · CoachCalendar';
+      } catch (e) {}
+    },
     switchTab(tab) {
       document.querySelectorAll('.nav-item').forEach(function (t) {
         t.classList.toggle('active', t.dataset.tab === tab);
@@ -8260,6 +8276,7 @@
       document.querySelectorAll('.section').forEach(function (s) {
         s.classList.toggle('active', s.dataset.screen === tab);
       });
+      this.updateHeaderTitle(tab);
       var fab = this.$('fabMain');
       if (fab) fab.classList.toggle('hidden', tab === 'settings');
       // На десктопе роль «+» играет кнопка в шапке — прячем её так же.
@@ -11514,11 +11531,14 @@
       if (!sp) return;
       var MIN_MS = 900, MAX_MS = 4000;
       var t0 = Date.now();
+      var restoreMark = null; // знак-мишень, который прячем на время полёта
 
+      function unhideHome() {
+        if (restoreMark) { restoreMark.style.visibility = ''; restoreMark = null; }
+      }
       function remove() {
-        var hm = document.querySelector('#navBrand .brand-mark, #appTitle .brand-mark');
-        if (hm) hm.style.visibility = '';
-        if (sp.parentNode) sp.parentNode.removeChild(sp);
+        unhideHome();
+        if (sp && sp.parentNode) sp.parentNode.removeChild(sp);
       }
 
       function done() {
@@ -11527,29 +11547,46 @@
         try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
 
         /* Куда лететь: знак логотипа на своём месте — позиция ① со скрина.
-           На десктопе это боковое меню, на телефоне — шапка. */
-        var device = document.documentElement.getAttribute('data-device');
-        var homeWrap = device === 'desktop'
-          ? document.getElementById('navBrand')
-          : document.getElementById('appTitle');
-        var homeMark = homeWrap && homeWrap.querySelector('.brand-mark');
+           На десктопе это боковое меню, на телефоне — шапка. Берём тот,
+           у кого реально есть размер (второй скрыт по data-device). */
+        var candidates = [
+          document.querySelector('#navBrand .brand-mark'),
+          document.querySelector('#appTitle .brand-mark')
+        ];
+        var homeMark = null, hr = null;
+        for (var i = 0; i < candidates.length; i++) {
+          if (!candidates[i]) continue;
+          var r = candidates[i].getBoundingClientRect();
+          if (r.width > 4 && r.height > 4) { homeMark = candidates[i]; hr = r; break; }
+        }
 
         var mr = mark && mark.getBoundingClientRect();
-        var hr = homeMark && homeMark.getBoundingClientRect();
-        var canFly = !reduce && mr && hr && mr.width > 4 && hr.width > 4;
+        var canFly = !reduce && mark && mr && mr.width > 4 && homeMark;
 
         if (canFly) {
           var dx = (hr.left + hr.width / 2) - (mr.left + mr.width / 2);
           var dy = (hr.top + hr.height / 2) - (mr.top + mr.height / 2);
           var scale = hr.width / mr.width;
+
+          // splashIn с fill: both перекрывал бы наш inline-transform — снимаем.
+          mark.style.animation = 'none';
+          restoreMark = homeMark;
           homeMark.style.visibility = 'hidden'; // чтобы не двоилось в полёте
-          mark.style.transition = 'transform 0.55s cubic-bezier(0.4, 0, 0.2, 1)';
+          // подпись убираем сразу — она не должна «висеть» поверх контента
+          var sn = sp.querySelector('.splash-name');
+          if (sn) { sn.style.transition = 'opacity 0.18s ease'; sn.style.opacity = '0'; }
+
           requestAnimationFrame(function () {
-            mark.style.transform =
-              'translate(' + dx + 'px,' + dy + 'px) scale(' + scale + ')';
+            mark.style.transition = 'transform 0.6s cubic-bezier(0.35, 0, 0.15, 1)';
+            requestAnimationFrame(function () {
+              mark.style.transform =
+                'translate(' + dx + 'px,' + dy + 'px) scale(' + scale + ')';
+            });
           });
-          setTimeout(function () { sp.classList.add('hide'); }, 130);
-          setTimeout(remove, 720);
+          setTimeout(function () { sp.classList.add('hide'); }, 180);
+          setTimeout(remove, 780);
+          // страховка: если remove не вызовется, знак всё равно вернётся
+          setTimeout(unhideHome, 1600);
         } else {
           sp.classList.add('hide');
           setTimeout(remove, 560);
