@@ -118,6 +118,32 @@
       }, { passive: true });
       window.addEventListener('orientationchange', function () { setTimeout(apply, 160); });
     })();
+
+    /* —— Как приложение открыто ——
+       Ставим <html data-launch="installed|browser"> ДО первого кадра.
+
+       Зачем: у установленного приложения заставку рисует сама система по
+       манифесту — тот же фон #12100F и наш значок во весь экран. Своя
+       заставка поверх системной давала второй логотип, другого размера и
+       рисунка: сначала огромный значок, потом маленький знак с подписью.
+       Два разных экрана запуска подряд. В установленном режиме свою
+       заставку оставляем без логотипа — только фон, который бесшовно
+       продолжает системный. Во вкладке браузера системной заставки нет,
+       и наша остаётся как была. */
+    (function detectLaunch() {
+      var el = document.documentElement;
+      function installed() {
+        if (/; wv\)/i.test(navigator.userAgent)) return true;      // WebView в APK
+        if (window.navigator.standalone === true) return true;      // iOS «на экран Домой»
+        try {
+          if (window.matchMedia('(display-mode: standalone)').matches) return true;
+          if (window.matchMedia('(display-mode: fullscreen)').matches) return true;
+          if (window.matchMedia('(display-mode: minimal-ui)').matches) return true;
+        } catch (e) {}
+        return false;
+      }
+      el.setAttribute('data-launch', installed() ? 'installed' : 'browser');
+    })();
   </script>
   <!--
     ============================================================
@@ -181,6 +207,12 @@
          а иконки остаются на фиксированной высоте --nav-h, не съезжая. */
       --sab-nav: var(--sab);
       --sal: env(safe-area-inset-left, 0px);
+      /* Реальная высота шапки и полосы вкладок настроек. Обе полосы
+         закреплены (position: fixed), поэтому им нужны точные координаты.
+         Значения ниже — только запасные: настоящие меряет JS
+         (trackChromeHeights) и переписывает их на <html>. */
+      --hdr-h: calc(var(--sat) + 66px);
+      --tabs-h: 67px;
       --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
 
@@ -473,10 +505,25 @@
       background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
     }
     .seg-btn {
-      flex: 1; padding: 9px 8px; border: none; border-radius: 9px;
+      /* min-width: 0 обязателен: без него flex-элемент не сжимается уже
+         своего текста, и длинная подпись («Оформление») раздвигает свою
+         колонку за счёт соседних — кнопки получаются разной ширины. */
+      flex: 1 1 0; min-width: 0;
+      padding: 9px 8px; border: none; border-radius: 9px;
       background: none; color: var(--text-muted);
       font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      text-align: center; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
       transition: background 0.15s, color 0.15s;
+    }
+    /* Три подписи вместо двух — тесноты по бокам себе позволить нельзя,
+       иначе «Оформление» упрётся в края колонки на узких экранах.
+       Оно же — самая длинная подпись: в свою треть при 0.85rem она влезает
+       начиная примерно с 360px ширины экрана. На узких (320px) размер
+       плавно уменьшается, на обычных телефонах остаётся прежним. */
+    .settings-tabs .seg-btn {
+      padding-left: 4px; padding-right: 4px;
+      font-size: clamp(0.78rem, calc(6px + 1.53vw), 0.85rem);
     }
     .seg-btn.active { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
     .seg-btn:focus { outline: none; }
@@ -687,22 +734,23 @@
        не заходит под вкладки, а останавливается у их нижнего края. */
     .settings-tabs-bar {
       position: fixed;
-      top: calc(var(--sat) + 58px);
+      /* Раньше высота шапки была вписана числом (58px). На деле шапка выше,
+         полоса наезжала на неё, и над переключателем оставалось ~3px против
+         12px под ним — отсюда и «кривые» вкладки. Теперь высоту меряет JS. */
+      top: var(--hdr-h);
       left: 0; right: 0;
       z-index: 60;
       background: var(--bg);
       box-shadow: 0 6px 10px -8px rgba(0,0,0,0.25);
-      padding: 10px max(var(--sar), 12px) 10px max(var(--sal), 12px);
+      padding: 12px max(var(--sar), 12px) 12px max(var(--sal), 12px);
     }
     .settings-tabs {
       max-width: 520px;
       margin: 0 auto;
     }
-    /* Высота .settings-tabs-bar = 10+10 (padding) + 43 (сам переключатель,
-       постоянная величина при неизменном шрифте) ≈ 63px. */
     .settings-body {
       position: fixed;
-      top: calc(var(--sat) + 58px + 63px);
+      top: calc(var(--hdr-h) + var(--tabs-h));
       bottom: calc(var(--nav-h) + var(--sab-nav));
       left: 0; right: 0;
       overflow-y: auto;
@@ -1587,11 +1635,28 @@
     .splash-mark [data-draw="4"] { animation-delay: 0.27s; }
     .splash-mark [data-draw="5"] { animation-delay: 0.37s; }
     @keyframes ccDraw { to { stroke-dashoffset: 0; } }
+    /* Рамка календаря — единственный замкнутый контур в знаке. Пока штрих
+       пунктирный, его начало и конец сходятся в одной точке встык, без
+       стыковки углов: на верхней грани остаётся тонкий разрыв, и он виден
+       не только во время отрисовки, но и после неё. Поэтому в самом конце
+       пунктир снимаем совсем — нулевой шаблон по спецификации SVG рисуется
+       сплошной линией, и контур смыкается начисто. */
+    .splash-mark [data-draw="1"] {
+      animation: ccDraw 0.85s ease forwards, ccSolid 1ms linear 0.86s forwards;
+    }
+    @keyframes ccSolid { to { stroke-dasharray: 0 0; } }
     @media (prefers-reduced-motion: reduce) {
       .splash-mark, .splash-name { animation: none; }
-      .splash-mark [data-draw] { animation: none; stroke-dashoffset: 0; }
+      .splash-mark [data-draw],
+      .splash-mark [data-draw="1"] {
+        animation: none; stroke-dasharray: 0 0; stroke-dashoffset: 0;
+      }
       .splash-mark { transition: none !important; }
     }
+    /* Установленное приложение: системная заставка уже показала фон и знак
+       во весь экран (см. detectLaunch в preboot). Свой логотип поверх неё —
+       это второй, другой по размеру знак подряд. Оставляем только фон. */
+    [data-launch="installed"] .splash-logo { display: none; }
 
     .theme-options { display: flex; gap: 8px; }
     .theme-option {
@@ -3163,7 +3228,7 @@
   const CONFIG = {
     /* Номер сборки. Меняется при каждой правке — виден внизу Настроек.
        Если на экране старый номер, значит браузер отдаёт кэш, а не новый файл. */
-    BUILD: '2026-09-07 · 74',
+    BUILD: '2026-09-07 · 75',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -11213,8 +11278,15 @@
          1) нативная обёртка вызвала window.__setSafeInsets(...) — верим ей;
          2) env() вернул ненулевой отступ — верим ему;
          3) иначе прикидываем высоту системной панели сами.
-       Прикидка включается только в установленном приложении (APK или PWA),
-       чтобы во вкладке браузера не спутать системную панель с адресной строкой. */
+
+       Прикидка (3) работает ТОЛЬКО в WebView (наш APK). Раньше она была
+       включена и в установленном PWA — и там врала. Она считает разницу
+       screen.height - innerHeight, а в PWA из окна вычтены сразу две
+       полосы: статус-бар сверху и жестовая снизу. Их сумма (≈72px) целиком
+       приписывалась низу, и под панелью появлялась белая полоса в палец
+       высотой. В PWA этой прикидки не нужно вовсе: раз env() отдал ноль,
+       значит окно и так заканчивается над жестовой полосой — её рисует
+       система за пределами вьюпорта, накладываться не на что. */
     (function setupSafeInsets() {
       var root = document.documentElement;
 
@@ -11236,18 +11308,15 @@
         return h;
       }
 
-      function isInstalledApp() {
-        if (/; wv\)/i.test(navigator.userAgent)) return true;            // Android WebView
-        if (window.matchMedia('(display-mode: standalone)').matches) return true;
-        if (window.matchMedia('(display-mode: fullscreen)').matches) return true;
-        return false;
+      function isNativeWebView() {
+        return /;\s?wv\)/i.test(navigator.userAgent);                    // Android WebView (APK)
       }
 
       function apply() {
         if (window.__safeInsetsFromNative) return;
         if (!/Android/i.test(navigator.userAgent)) return;
         if (envBottomPx() > 0) return;
-        if (!isInstalledApp()) return;
+        if (!isNativeWebView()) return;
 
         var screenH = (window.screen && window.screen.height) || 0;
         var topInset = parseFloat(getComputedStyle(root).getPropertyValue('--sat')) || 0;
@@ -11261,6 +11330,69 @@
       setTimeout(apply, 400);
       window.addEventListener('resize', apply);
       window.addEventListener('orientationchange', function () { setTimeout(apply, 200); });
+    })();
+
+    /* —— Настоящие высоты шапки и полосы вкладок настроек ——
+
+       Полоса вкладок и область под ней закреплены (position: fixed), а
+       закреплённому элементу нужны точные координаты: под чем он стоит и
+       сколько занимает сам. Числом это не записать — высота шапки зависит
+       от выреза сверху (--sat), размера шрифта у пользователя и длины
+       подзаголовка. Прежняя вписанная константа 58px была меньше реальной
+       высоты: полоса наезжала на шапку, её верхний отступ съедался, и над
+       переключателем оставалось втрое меньше воздуха, чем под ним.
+       Меряем и кладём в переменные, которыми пользуется CSS. */
+    (function trackChromeHeights() {
+      var root = document.documentElement;
+      var header = document.querySelector('.header');
+      var bar = document.querySelector('.settings-tabs-bar');
+      if (!header || !bar) return;
+
+      function measure() {
+        var h = Math.round(header.getBoundingClientRect().height);
+        if (h > 0) root.style.setProperty('--hdr-h', h + 'px');
+        var t = Math.round(bar.getBoundingClientRect().height);
+        if (t > 0) root.style.setProperty('--tabs-h', t + 'px');
+      }
+
+      /* Замер стоит копейки, но дёргать его на каждое событие подряд ни к
+         чему — сводим всё к одному замеру на кадр. */
+      var queued = false;
+      function schedule() {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(function () { queued = false; measure(); });
+      }
+
+      measure();
+
+      /* ResizeObserver по умолчанию следит за content-box, а высота шапки
+         меняется в основном за счёт padding: вырез сверху (--sat) и разная
+         раскладка телефон/десктоп сидят именно в нём. Content-box при этом
+         может не измениться ни на пиксель — и наблюдатель промолчит.
+         Поэтому явно просим border-box. */
+      if (window.ResizeObserver) {
+        var ro = new ResizeObserver(schedule);
+        try {
+          ro.observe(header, { box: 'border-box' });
+          ro.observe(bar, { box: 'border-box' });
+        } catch (e) {                       // старый движок без опции box
+          ro.observe(header);
+          ro.observe(bar);
+        }
+      }
+
+      /* Смена раскладки (data-device), темы (data-theme) и показ оболочки
+         после входа меняют высоту шапки скачком, мимо ResizeObserver. */
+      if (window.MutationObserver) {
+        var mo = new MutationObserver(schedule);
+        mo.observe(root, { attributes: true, attributeFilter: ['data-device', 'data-theme'] });
+        var shell = document.getElementById('appShell');
+        if (shell) mo.observe(shell, { attributes: true, attributeFilter: ['class'] });
+      }
+
+      window.addEventListener('resize', schedule);
+      window.addEventListener('orientationchange', function () { setTimeout(measure, 200); });
     })();
 
     /* —— Поле телефона с выбором страны ——
@@ -11630,7 +11762,11 @@
     (function hideSplash() {
       var sp = document.getElementById('splash');
       if (!sp) return;
-      var MIN_MS = 900, MAX_MS = 4000;
+      /* В установленном приложении логотип уже показала системная заставка,
+         и наша — просто фон того же цвета. Держать его лишнюю секунду
+         незачем: отдаём приложение сразу, как только оно готово. */
+      var installed = document.documentElement.getAttribute('data-launch') === 'installed';
+      var MIN_MS = installed ? 0 : 900, MAX_MS = 4000;
       var t0 = Date.now();
       var restoreMark = null; // знак-мишень, который прячем на время полёта
 
@@ -11662,7 +11798,9 @@
         }
 
         var mr = mark && mark.getBoundingClientRect();
-        var canFly = !reduce && mark && mr && mr.width > 4 && homeMark;
+        /* Полёт знака на своё место — только когда знак на заставке вообще
+           был. В установленном приложении его нет (см. data-launch). */
+        var canFly = !reduce && !installed && mark && mr && mr.width > 4 && homeMark;
 
         if (canFly) {
           var dx = (hr.left + hr.width / 2) - (mr.left + mr.width / 2);
