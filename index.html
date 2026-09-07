@@ -3163,7 +3163,7 @@
   const CONFIG = {
     /* Номер сборки. Меняется при каждой правке — виден внизу Настроек.
        Если на экране старый номер, значит браузер отдаёт кэш, а не новый файл. */
-    BUILD: '2026-09-07 · 73',
+    BUILD: '2026-09-07 · 74',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -3759,11 +3759,18 @@
       'Tap ⋮ (three dots) in the top-right corner of the browser',
     'Выберите «Установить приложение» или «Добавить на главный экран»':
       'Choose "Install app" or "Add to Home screen"',
-    'Для установки веб-приложения на рабочий стол перейдите в Хром':
+    'Для установки веб-приложения на рабочий стол перейдите в Chrome':
       'To install the web app on your Home Screen, switch to Chrome',
-    'Яндекс установит обычный ярлык сайта — он снова открывает страницу в браузере, а не отдельным приложением.':
-      'Yandex will only add a plain site shortcut — it reopens the page in the browser instead of a separate app.',
+    /* Две отдельные строки, а не одна: I18N.tBlock переводит многострочный
+       текст построчно, ключ на весь абзац не совпал бы никогда. */
+    'Нажмите «Перейти» и выберите Chrome в списке.':
+      'Tap “Open” and pick Chrome from the list.',
+    'Яндекс Браузер установит только ярлык сайта — он снова открывает страницу в браузере.':
+      'Yandex Browser only adds a site shortcut — it reopens the page in the browser.',
     'Перейти': 'Open',
+    'Ссылка скопирована — откройте Chrome и вставьте её':
+      'Link copied — open Chrome and paste it',
+    'Откройте Chrome и введите адрес': 'Open Chrome and enter this address',
 
     /* Расписание */
     '📋 Копировать неделю': '📋 Copy week',
@@ -9919,11 +9926,11 @@
           if (PwaInstall.isYandexBrowser()) {
             UI.ask({
               icon: '🌐',
-              title: 'Для установки веб-приложения на рабочий стол перейдите в Хром',
-              text: 'Яндекс установит обычный ярлык сайта — он снова открывает страницу в браузере, а не отдельным приложением.',
+              title: 'Для установки веб-приложения на рабочий стол перейдите в Chrome',
+              text: 'Нажмите «Перейти» и выберите Chrome в списке.\nЯндекс Браузер установит только ярлык сайта — он снова открывает страницу в браузере.',
               okText: 'Перейти'
             }).then(function (yes) {
-              if (yes) window.location.href = PwaInstall.chromeIntentUrl();
+              if (yes) PwaInstall.openInChrome();
               else PwaInstall.promptInstall();
             });
           } else {
@@ -11916,14 +11923,36 @@
     isYandexBrowser() {
       return /YaBrowser/.test(navigator.userAgent || '');
     },
-    /** intent-ссылка открывает ТУ ЖЕ страницу в Chrome, если он установлен. */
-    chromeIntentUrl() {
-      var target = (location.href || '').replace(/^https?:\/\//, '');
-      // S.browser_fallback_url обязателен для части браузеров: без него
-      // Android-система может просто отказаться разбирать intent-ссылку.
-      // Если Chrome не установлен — уводит на его страницу в Play Store.
-      var fallback = encodeURIComponent('https://play.google.com/store/apps/details?id=com.android.chrome');
-      return 'intent://' + target + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + fallback + ';end';
+    /**
+     * Уводим страницу в Chrome через системный лист «Поделиться».
+     *
+     * Прямая intent-ссылка (intent://…;package=com.android.chrome) здесь НЕ
+     * работает: проверено на устройстве — Яндекс.Браузер разбирает её сам,
+     * достаёт обычный https-адрес и открывает его в своей же новой вкладке,
+     * игнорируя указанный package. Он намеренно не отпускает пользователя в
+     * чужой браузер, и обойти это со стороны страницы нечем.
+     *
+     * Системный лист выбора приложения Яндекс перехватить не может — Chrome
+     * в нём есть всегда. Ниже — две ступени на случай, если Web Share
+     * недоступен: копирование ссылки и, в самом конце, показ адреса руками.
+     */
+    async openInChrome() {
+      var url = location.href;
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: 'CoachCalendar', url: url });
+          return;
+        }
+      } catch (e) {
+        // Лист закрыли, ничего не выбрав — это не ошибка, второй раз не лезем.
+        if (e && e.name === 'AbortError') return;
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        UI.showToast('Ссылка скопирована — откройте Chrome и вставьте её');
+        return;
+      } catch (e) {}
+      UI.notify({ icon: '🌐', title: 'Откройте Chrome и введите адрес', text: url });
     },
     async promptInstall() {
       var e = this.deferredPrompt;
