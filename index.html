@@ -2270,8 +2270,8 @@
       <h1 class="auth-gate-title" data-no-i18n><b>Coach</b>Calendar</h1>
       <p class="auth-gate-sub" id="authGateSub">Создайте профиль, чтобы сохранять клиентов и расписание</p>
       <div class="storage-warn" style="text-align:left;margin-bottom:16px;">
-        <strong>Данные хранятся на этом устройстве</strong>
-        Регулярно делайте экспорт в файл через <b>Настройки → Данные</b> — это надёжный способ не потерять клиентов и расписание.
+        <strong>Аккаунт и данные — в облаке</strong>
+        Войдите тем же телефоном или почтой с любого устройства — клиенты, расписание и подписка будут на месте.
       </div>
 
       <div id="authPanelRegister">
@@ -2529,7 +2529,7 @@
             <button type="button" class="btn btn-secondary btn-sm" data-action="cloud-diagnose" style="width:100%;margin-top:6px;">Проверить синхронизацию</button>
             <pre id="cloudDiagnostics" class="hidden" style="margin-top:8px;padding:10px;border-radius:10px;background:rgba(0,0,0,0.05);font-size:0.7rem;line-height:1.5;white-space:pre-wrap;word-break:break-word;"></pre>
           </div>
-          <p style="margin-top:8px;font-size:0.72rem;opacity:0.9;">Основное хранилище — это устройство. Синхронизация через Яндекс.Диск доступна не во всех условиях (в мобильном браузере её может блокировать система), поэтому регулярный экспорт в файл — самый надёжный способ сохранить данные.</p>
+          <p style="margin-top:8px;font-size:0.72rem;opacity:0.9;">Данные хранятся и на устройстве, и на сервере. Регулярный экспорт в файл — дополнительная подстраховка на случай проблем со связью.</p>
         </div>
         <button type="button" class="btn btn-danger btn-block btn-sm" data-action="export">📤 Экспорт данных</button>
         <button type="button" class="btn btn-secondary btn-block btn-sm mt-2" data-action="import-trigger">📥 Импорт данных</button>
@@ -2845,7 +2845,7 @@
         <div class="modal-title">Профиль</div>
         <button type="button" class="modal-close" data-close="authModal">×</button>
       </div>
-      <p class="text-sm text-muted mb-2">Данные на устройстве. Яндекс ID / SMS требуют сервер — здесь локальный профиль.</p>
+      <p class="text-sm text-muted mb-2">Аккаунт и данные хранятся в облаке — доступны с любого устройства.</p>
       <div class="form-group"><label>Имя</label><input type="text" id="authName" placeholder="Ваше имя"></div>
       <div class="form-group"><label>Телефон</label><input type="tel" id="authPhone" placeholder="+7 ..."></div>
       <button type="button" class="btn btn-primary btn-block" data-action="profile-save">Сохранить профиль</button>
@@ -3072,9 +3072,14 @@
   const CONFIG = {
     /* Номер сборки. Меняется при каждой правке — виден внизу Настроек.
        Если на экране старый номер, значит браузер отдаёт кэш, а не новый файл. */
-    BUILD: '2026-09-03 · 66',
+    BUILD: '2026-09-07 · 67',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
+    /* Свой сервер: аккаунты, подписка и синхронизация данных между
+       устройствами. Яндекс.Диск для этого не годится — он отдаёт файлы
+       через отдельный домен и в браузере (PWA, не APK) это ненадёжно.
+       Деплой — calendar-backend/README. */
+    API_BASE: 'https://calendar-backend.taoo1997.workers.dev',
     DAY_START_HOUR: 8,
     DAY_END_HOUR: 22,
     HOUR_HEIGHT: 96,
@@ -3584,11 +3589,9 @@
     'Создайте профиль, чтобы сохранять клиентов и расписание':
       'Create a profile to keep your clients and schedule',
     'Яндекс ID': 'Yandex ID',
-    'Данные хранятся на этом устройстве': 'Your data is stored on this device',
-    'Регулярно делайте экспорт в файл через': 'Export a backup file regularly from',
-    'Настройки → Данные': 'Settings → Data',
-    '— это надёжный способ не потерять клиентов и расписание.':
-      '— a reliable way not to lose your clients and schedule.',
+    'Аккаунт и данные — в облаке': 'Your account and data live in the cloud',
+    'Войдите тем же телефоном или почтой с любого устройства — клиенты, расписание и подписка будут на месте.':
+      'Sign in with the same phone or email from any device — your clients, schedule and subscription will be there.',
     'Локальная регистрация (телефон/пароль) работает': 'A local account (phone/password) works',
     'только на этом устройстве': 'on this device only',
     'Имя *': 'Name *',
@@ -3627,20 +3630,26 @@
     'Неверный пароль': 'Wrong password',
     'На этом устройстве ещё нет ни одного аккаунта — сначала зарегистрируйтесь':
       'There are no accounts on this device yet — please register first',
-    'Аккаунт с таким логином не найден. Локальный вход работает только на том устройстве, где вы регистрировались. Для доступа с любого устройства входите через Яндекс ID.':
-      'No account was found with this login. A local sign-in only works on the device where you registered. To reach your data from any device, sign in with Yandex ID.',
-    'Этот аккаунт привязан к Яндекс ID — нажмите «Войти через Яндекс ID»':
-      'This account is linked to Yandex ID — tap “Sign in with Yandex ID”',
+    'Аккаунт с таким логином не найден':
+      'No account was found with this login',
+    'Нет связи с сервером — проверьте интернет и повторите':
+      'No connection to the server — check your internet and try again',
+    'Нет связи с сервером — проверьте интернет':
+      'No connection to the server — check your internet',
+    'Не удалось подключить аккаунт к серверу':
+      'Could not connect the account to the server',
+    'Этот аккаунт привязан к Яндекс ID — войдите через Яндекс ID':
+      'This account is linked to Yandex ID — sign in with Yandex ID',
     'Яндекс ID работает только по https:// (залейте на хостинг)':
       'Yandex ID only works over https:// (deploy the page to a host)',
     'Не удалось открыть окно входа': 'Could not open the sign-in window',
     'Не удалось войти через Яндекс': 'Could not sign in with Yandex',
     'Выйти из аккаунта?': 'Sign out?',
     'Выйти из аккаунта': 'Sign out',
-    'Данные в облаке (Яндекс.Диск) сохранятся.': 'Your data in the cloud (Yandex.Disk) will be kept.',
+    'Данные в облаке сохранятся.': 'Your data in the cloud will be kept.',
     'Вы вышли': 'You are signed out',
-    'Локальный аккаунт: данные только на этом устройстве':
-      'Local account — your data stays on this device only',
+    'Аккаунт без облака: данные только на этом устройстве':
+      'Account without cloud sync — your data stays on this device only',
 
     /* Расписание */
     '📋 Копировать неделю': '📋 Copy week',
@@ -3838,8 +3847,8 @@
     'Профиль сохранён': 'Profile saved',
     'Профиль очищен': 'Profile cleared',
     'Настройки сохранены': 'Settings saved',
-    'Данные на устройстве. Яндекс ID / SMS требуют сервер — здесь локальный профиль.':
-      'Stored on this device. Yandex ID / SMS need a server — this is a local profile.',
+    'Аккаунт и данные хранятся в облаке — доступны с любого устройства.':
+      'Account and data are stored in the cloud — available from any device.',
     'Название календаря': 'Calendar name',
     'Язык': 'Language',
     'Валюта': 'Currency',
@@ -3927,36 +3936,32 @@
     '↩️ Отменить последнее удаление': '↩️ Undo last deletion',
     'Вернёт расписание к состоянию до очистки дня.':
       'Restores the schedule to how it was before the day was cleared.',
-    'Основное хранилище — это устройство. Синхронизация через Яндекс.Диск доступна не во всех условиях (в мобильном браузере её может блокировать система), поэтому регулярный экспорт в файл — самый надёжный способ сохранить данные.':
-      'This device is the primary storage. Sync via Yandex.Disk is not available everywhere (a mobile browser may block it), so a regular file export is the most reliable way to keep your data.',
+    'Данные хранятся и на устройстве, и на сервере. Регулярный экспорт в файл — дополнительная подстраховка на случай проблем со связью.':
+      'Data is kept both on this device and on the server. A regular file export is extra insurance against connection issues.',
     'Экспорт готов': 'Export ready',
     'Импорт выполнен': 'Import complete',
     'Ошибка файла': 'File error',
-    'Синхронизация с Яндекс.Диском…': 'Syncing with Yandex.Disk…',
-    'Диск не ответил — данные не тронуты. Если данные тут есть, нажмите «Отправить в облако»':
-      'Disk did not answer — nothing was touched. If your data is here, tap “Send to cloud”',
+    'Синхронизация с облаком…': 'Syncing with the cloud…',
+    'Сервер не ответил — данные не тронуты. Если данные тут есть, нажмите «Отправить в облако»':
+      'The server did not answer — nothing was touched. If your data is here, tap “Send to cloud”',
     'В облаке было пусто — загрузили данные с устройства':
       'The cloud was empty — data from this device was uploaded',
     'Загружено из облака': 'Loaded from the cloud',
     'Сохранено в облако': 'Saved to the cloud',
     'Не удалось синхронизировать': 'Could not sync',
     'Не удалось синхронизировать с облаком': 'Could not sync with the cloud',
-    'Данные загружены с Яндекс.Диска': 'Data loaded from Yandex.Disk',
+    'Данные загружены с сервера': 'Data loaded from the server',
     'Локальные данные сохранены в облако': 'Local data was saved to the cloud',
     'Только локально': 'Local only',
-    'Только локально — войдите через Яндекс ID для синхронизации':
-      'Local only — sign in with Yandex ID to sync',
-    '☁ Активна (Яндекс.Диск)': '☁ Active (Yandex.Disk)',
-    'Нужно войти через Яндекс снова (токен истёк)': 'Sign in with Yandex again (the token expired)',
-    'Синхронизация доступна только после входа через Яндекс ID':
-      'Sync is available only after signing in with Yandex ID',
+    'Нужно войти снова, чтобы включить синхронизацию':
+      'Sign in again to enable sync',
     'На этом устройстве нет данных — отправлять нечего':
       'There is no data on this device — nothing to send',
     'Отправлять нечего': 'Nothing to send',
     'Не удалось отправить — проверьте связь': 'Could not send — check your connection',
-    'Сессия Яндекс истекла — войдите снова': 'Your Yandex session has expired — sign in again',
-    'Сессия Яндекс истекла — войдите снова для синхронизации':
-      'Your Yandex session has expired — sign in again to sync',
+    'Сессия истекла — войдите снова': 'Your session has expired — sign in again',
+    'Сессия истекла — войдите снова для синхронизации':
+      'Your session has expired — sign in again to sync',
     'То, что лежит в облаке, будет заменено.': 'Whatever is in the cloud will be replaced.',
     'Возвращать нечего': 'Nothing to restore',
     'Снимок сохраняется только перед уборкой дублей и очисткой дня, и только начиная со сборки 39.':
@@ -4354,7 +4359,13 @@
       }
     },
     load() { return this.loadKey(CONFIG.STORAGE_KEY); },
-    save(payload) { this.saveKey(CONFIG.STORAGE_KEY, payload); }
+    save(payload) { this.saveKey(CONFIG.STORAGE_KEY, payload); },
+    removeKey(key) {
+      try {
+        if (this.available) localStorage.removeItem(key);
+        else delete this.memory[key];
+      } catch (e) { console.error('[Storage.removeKey]', e); }
+    }
   };
 
   /* =========================================================
@@ -4979,6 +4990,46 @@
 
 
   /* =========================================================
+   * 4a2. API — запросы к своему серверу (аккаунты, подписка, данные)
+   * ========================================================= */
+  const Api = {
+    /**
+     * Единая точка входа. `auth` = true подставляет Bearer-токен текущего
+     * пользователя. Ошибка сети и ошибка сервера различаются в поле
+     * result.networkError — это важно там, где нельзя молча стереть
+     * локальные данные из-за временной недоступности сервера (Cloud).
+     */
+    async call(method, path, body, auth) {
+      var opts = { method: method, headers: {} };
+      if (body !== undefined) {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+      }
+      if (auth) {
+        var token = State.currentUser && State.currentUser.token;
+        if (!token) return { ok: false, status: 0, error: 'Не авторизовано' };
+        opts.headers['Authorization'] = 'Bearer ' + token;
+      }
+      var res;
+      try {
+        res = await fetch(CONFIG.API_BASE + path, opts);
+      } catch (e) {
+        return { ok: false, status: 0, networkError: true, error: 'Нет связи с сервером' };
+      }
+      var data = null;
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok) {
+        return { ok: false, status: res.status, error: (data && data.error) || ('Ошибка ' + res.status) };
+      }
+      return { ok: true, status: res.status, data: data };
+    },
+    get(path, auth) { return this.call('GET', path, undefined, auth); },
+    post(path, body, auth) { return this.call('POST', path, body || {}, auth); },
+    put(path, body, auth) { return this.call('PUT', path, body || {}, auth); },
+    patch(path, body, auth) { return this.call('PATCH', path, body || {}, auth); }
+  };
+
+  /* =========================================================
    * 4b. AUTH — регистрация, сессия, Яндекс ID
    * ========================================================= */
   const Auth = {
@@ -5167,6 +5218,50 @@
       var db = this.loadUsers();
       return (db.users || []).length;
     },
+    /**
+     * Принять пользователя, которого подтвердил сервер, и завести/обновить
+     * его локальную запись (кэш для быстрого офлайн-старта). Если на этом
+     * устройстве уже была запись с тем же логином под другим id —
+     * значит это аккаунт, заведённый ДО подключения сервера: переносим
+     * его локальные ключи (данные, статус подписки) на новый id, а не
+     * оставляем их сиротами под старым.
+     */
+    _adoptServerUser(serverUser, token, passHash) {
+      var db = this.loadUsers();
+      var loginKey = this.loginKey(serverUser.login);
+      var oldEntry = db.users.find(function (u) { return u.loginKey === loginKey; }) || null;
+
+      if (oldEntry && oldEntry.id !== serverUser.id) {
+        var rename = function (prefix) {
+          var oldKey = prefix + '_' + oldEntry.id;
+          var newKey = prefix + '_' + serverUser.id;
+          if (Storage.loadKey(newKey) == null) {
+            var oldData = Storage.loadKey(oldKey);
+            if (oldData != null) Storage.saveKey(newKey, oldData);
+          }
+          Storage.removeKey(oldKey);
+        };
+        rename(CONFIG.STORAGE_KEY);
+        rename(CONFIG.SUBSCRIPTION.KEY);
+      }
+
+      var user = {
+        id: serverUser.id,
+        name: serverUser.name,
+        login: serverUser.login,
+        loginKey: loginKey,
+        loginKind: serverUser.loginKind,
+        passHash: passHash !== undefined ? passHash : (oldEntry ? oldEntry.passHash : null),
+        yandexId: serverUser.loginKind === 'yandex' ? serverUser.id : null,
+        token: token,
+        createdAt: (oldEntry && oldEntry.createdAt) || new Date().toISOString()
+      };
+      db.users = db.users.filter(function (u) { return u.loginKey !== loginKey; });
+      db.users.push(user);
+      db.sessionId = user.id;
+      this.saveUsers(db);
+      return user;
+    },
     async registerLocal(name, login, password) {
       name = (name || '').trim();
       password = password || '';
@@ -5179,76 +5274,79 @@
         return { ok: false, error: 'Пароль должен быть не короче 8 символов' };
       }
 
-      // Аккаунт уже есть — не создаём второй, а зовём войти.
-      // +7 999…, 8 999… и «+7 (999) …» — это один и тот же аккаунт.
-      var existing = this.findUserByLogin(v.login);
-      if (existing) {
-        return {
-          ok: false,
-          exists: true,
-          login: this.displayLogin(existing.loginKey || existing.login),
-          error: 'Аккаунт ' + this.displayLogin(existing.loginKey || existing.login) +
-                 ' уже зарегистрирован — войдите в него'
-        };
+      var passHash = await this.hash(password);
+      var res = await Api.post('/api/register', { name: name, login: v.login, loginKind: v.kind, passHash: passHash });
+
+      if (!res.ok) {
+        if (res.networkError) return { ok: false, error: 'Нет связи с сервером — проверьте интернет и повторите' };
+        if (res.status === 409) {
+          return {
+            ok: false,
+            exists: true,
+            login: this.displayLogin(v.login),
+            error: 'Аккаунт ' + this.displayLogin(v.login) + ' уже зарегистрирован — войдите в него'
+          };
+        }
+        return { ok: false, error: res.error };
       }
 
-      var db = this.loadUsers();
-      var user = {
-        id: Domain.uid(),
-        name: name,
-        login: v.login,        // каноничный вид: 79991234567 или email
-        loginKey: this.loginKey(v.login),
-        loginKind: v.kind,
-        passHash: await this.hash(password),
-        yandexId: null,
-        createdAt: new Date().toISOString()
-      };
-      db.users.push(user);
-      db.sessionId = user.id;
-      this.saveUsers(db);
-
-      // Проверяем, что запись действительно легла в хранилище.
-      // Если WebView не сохраняет localStorage, лучше сказать об этом сразу,
-      // чем оставить человека с «аккаунт не найден» при следующем входе.
-      var check = this.findUserByLogin(v.login);
-      if (!check) {
-        return { ok: false, error: 'Не удалось сохранить аккаунт: браузер блокирует хранилище' };
-      }
-      return { ok: true, user: user };
+      return { ok: true, user: this._adoptServerUser(res.data.user, res.data.token, passHash) };
     },
     async loginLocal(login, password) {
       password = password || '';
-      if (!this.normalizeLogin(login)) return { ok: false, error: 'Введите телефон или email' };
+      var v = this.validateLogin(login);
+      if (!v.ok) return { ok: false, error: v.error };
       if (!password) return { ok: false, error: 'Введите пароль' };
-      var db = this.loadUsers();
-      // db передаём явно: ниже эта запись меняется (обновление хеша пароля)
-      var user = this.findUserByLogin(login, db);
-      if (!user) {
-        var total = (db.users || []).length;
-        return {
-          ok: false,
-          notFound: true,
-          error: total === 0
-            ? 'На этом устройстве ещё нет ни одного аккаунта — сначала зарегистрируйтесь'
-            : 'Аккаунт с таким логином не найден. Локальный вход работает только на том устройстве, где вы регистрировались. Для доступа с любого устройства входите через Яндекс ID.'
-        };
+
+      var passHash = await this.hash(password);
+      var res = await Api.post('/api/login', { login: v.login, passHash: passHash });
+
+      if (res.ok) {
+        return { ok: true, user: this._adoptServerUser(res.data.user, res.data.token, passHash) };
       }
-      if (!user.passHash) return { ok: false, error: 'Этот аккаунт привязан к Яндекс ID — нажмите «Войти через Яндекс ID»' };
-      var ok = await this.verifyPassword(password, user.passHash);
-      if (!ok) return { ok: false, error: 'Неверный пароль' };
-      if (this.isLegacyHash(user.passHash)) {
-        user.passHash = await this.hash(password);
-        this.saveUsers(db);
+
+      if (res.networkError) {
+        // Оффлайн работает только на устройстве, где уже был успешный вход.
+        var db = this.loadUsers();
+        var cached = this.findUserByLogin(v.login, db);
+        if (cached && cached.token && cached.passHash && await this.verifyPassword(password, cached.passHash)) {
+          db.sessionId = cached.id;
+          this.saveUsers(db);
+          return { ok: true, user: cached, offline: true };
+        }
+        return { ok: false, error: 'Нет связи с сервером — проверьте интернет' };
       }
-      db.sessionId = user.id;
-      this.saveUsers(db);
-      return { ok: true, user: user };
+
+      if (res.status === 404) {
+        // Сервер про такой логин не знает — возможно, это аккаунт,
+        // заведённый на этом устройстве ДО подключения сервера. Если
+        // введённый пароль совпадает с тем, что здесь уже сохранён,
+        // молча регистрируем его на сервере тем же паролем — это тот же
+        // человек, а не новый.
+        var localDb = this.loadUsers();
+        var localUser = this.findUserByLogin(v.login, localDb);
+        if (localUser && localUser.passHash && await this.verifyPassword(password, localUser.passHash)) {
+          var regRes = await Api.post('/api/register', {
+            name: localUser.name || 'Без имени',
+            login: v.login,
+            loginKind: v.kind,
+            passHash: passHash
+          });
+          if (regRes.ok) {
+            return { ok: true, user: this._adoptServerUser(regRes.data.user, regRes.data.token, passHash), migrated: true };
+          }
+          return { ok: false, error: regRes.error || 'Не удалось подключить аккаунт к серверу' };
+        }
+        return { ok: false, notFound: true, error: 'Аккаунт с таким логином не найден' };
+      }
+
+      return { ok: false, error: res.error };
     },
     logout() {
+      if (State.currentUser && State.currentUser.token) Api.post('/api/logout', {}, true);
       var db = this.loadUsers();
       db.sessionId = null;
       this.saveUsers(db);
-      this.clearYandexToken();
       State.currentUser = null;
       try { Sub.reset(); } catch (e) {}
       State.clients = [];
@@ -5267,9 +5365,16 @@
       var user = db.users.find(function (u) { return u.id === (State.currentUser && State.currentUser.id); });
       if (!user) return;
       if (partial.name != null) user.name = partial.name;
-      if (partial.login != null) user.login = this.normalizeLogin(partial.login);
+      if (partial.login != null && user.loginKind !== 'yandex') {
+        user.login = this.normalizeLogin(partial.login);
+        user.loginKey = this.loginKey(user.login);
+      }
       this.saveUsers(db);
       State.currentUser = user;
+      if (user.token) {
+        Api.patch('/api/profile', { name: user.name, login: user.loginKind !== 'yandex' ? user.login : undefined }, true)
+          .then(function (res) { if (!res.ok) console.warn('[updateProfile]', res.error); });
+      }
     },
     getYandexClientId() {
       var fromSettings = (State.settings && State.settings.yandexClientId) || '';
@@ -5333,8 +5438,9 @@
       var state = Domain.uid();
       try { sessionStorage.setItem('ya_oauth_state', state); } catch (e) {}
       try { sessionStorage.setItem('ya_oauth_redirect', redirect); } catch (e) {}
-      // cloud_api:disk.app_folder — изолированная папка приложения для синхронизации данных
-      var scope = 'login:info login:email cloud_api:disk.app_folder';
+      // Данные синхронизируются через свой сервер — Яндекс.Диск больше не нужен,
+      // хватает прав только на то, чтобы подтвердить личность.
+      var scope = 'login:info login:email';
       var url = 'https://oauth.yandex.ru/authorize'
         + '?response_type=token'
         + '&client_id=' + encodeURIComponent(clientId)
@@ -5368,6 +5474,12 @@
       return params.access_token || null;
     },
     /** Обработка возврата с oauth.yandex.ru (#access_token=...) */
+    /**
+     * OAuth-токен Яндекса нужен только на один запрос — подтвердить личность
+     * нашему серверу (`/api/login/yandex`, сервер сам дёргает
+     * login.yandex.ru/info, клиенту доверять нельзя). Дальше работает уже
+     * наш собственный токен, поэтому яндексовый нигде не хранится.
+     */
     async handleYandexRedirect() {
       var hash = window.location.hash || '';
       if (hash.indexOf('access_token=') === -1) return false;
@@ -5379,85 +5491,31 @@
       if (history.replaceState) {
         history.replaceState(null, '', window.location.pathname + window.location.search);
       }
-      var token = params.access_token;
-      if (!token) return false;
-      try {
-        // Сохраняем токен для Disk API (синхронизация)
-        try {
-          localStorage.setItem('dance_trainer_ya_token', token);
-          if (params.expires_in) {
-            localStorage.setItem('dance_trainer_ya_token_exp', String(Date.now() + parseInt(params.expires_in, 10) * 1000));
-          }
-        } catch (e) {}
-        var res = await fetch('https://login.yandex.ru/info?format=json', {
-          headers: { Authorization: 'OAuth ' + token }
-        });
-        if (!res.ok) throw new Error('Yandex info failed');
-        var info = await res.json();
-        var yandexId = String(info.id);
-        var name = info.display_name || info.real_name || info.login || 'Яндекс';
-        var login = (info.default_email || info.login || ('ya_' + yandexId)).toLowerCase();
-        var db = this.loadUsers();
-        var user = db.users.find(function (u) { return u.yandexId === yandexId; });
-        if (!user) {
-          user = {
-            id: Domain.uid(),
-            name: name,
-            login: login,
-            passHash: null,
-            yandexId: yandexId,
-            createdAt: new Date().toISOString()
-          };
-          db.users.push(user);
-        } else {
-          user.name = name;
-          user.login = login;
-        }
-        db.sessionId = user.id;
-        this.saveUsers(db);
-        return user;
-      } catch (err) {
-        console.error(err);
+      var accessToken = params.access_token;
+      if (!accessToken) return false;
+
+      var res = await Api.post('/api/login/yandex', { accessToken: accessToken });
+      if (!res.ok) {
+        console.error('[handleYandexRedirect]', res.error);
         UI.showToast('Не удалось войти через Яндекс');
         return null;
       }
-    },
-    getYandexToken() {
-      try {
-        var t = localStorage.getItem('dance_trainer_ya_token');
-        var exp = localStorage.getItem('dance_trainer_ya_token_exp');
-        if (!t) return null;
-        if (exp && Date.now() > parseInt(exp, 10)) {
-          localStorage.removeItem('dance_trainer_ya_token');
-          localStorage.removeItem('dance_trainer_ya_token_exp');
-          return null;
-        }
-        return t;
-      } catch (e) { return null; }
-    },
-    clearYandexToken() {
-      try {
-        localStorage.removeItem('dance_trainer_ya_token');
-        localStorage.removeItem('dance_trainer_ya_token_exp');
-      } catch (e) {}
+      return this._adoptServerUser(res.data.user, res.data.token, null);
     }
   };
 
   /* =========================================================
-   * 4c. CLOUD — синхронизация через Яндекс.Диск (папка приложения)
+   * 4c. CLOUD — синхронизация данных со своим сервером
    * ========================================================= */
   const Cloud = {
-    PATH: 'app:/dance-trainer-data.json',
     _syncing: false,
     _lastPush: 0,
-    /* Пока не выполнена первая загрузка из облака, отправлять НЕЛЬЗЯ.
+    /* Пока не выполнена первая загрузка с сервера, отправлять НЕЛЬЗЯ.
        Раньше приложение стартовало с пустым состоянием, успевало отправить
-       эту пустоту на Диск и затирало настоящие данные — файл в облаке
-       становился размером в пару сотен байт. */
+       эту пустоту в облако и затирало настоящие данные. */
     _initialSyncDone: false,
     _lastSyncReason: '',
     _lastPullError: '',
-    _lastPullVia: '',
 
     /** Сколько всего записей в наборе данных (0 = пусто) */
     countRecords(d) {
@@ -5481,19 +5539,16 @@
     localCount() { return this.countRecords(this.localSnapshot()); },
 
     canSync() {
-      return !!(State.currentUser && State.currentUser.yandexId && Auth.getYandexToken());
+      return !!(State.currentUser && State.currentUser.token);
     },
 
     /**
      * Диагностика: возвращает текст с точной причиной, почему синхронизация
-     * не работает. Нужна потому, что обычные ошибки Диска молча гасятся.
+     * не работает. Нужна потому, что обычные сетевые ошибки молча гасятся.
      */
     async diagnose() {
       var lines = [];
 
-      /* Блок «где мы работаем». Без него невозможно понять, почему
-         не открываются контакты и куда уехал вход через Яндекс —
-         почти всегда причина в том, что открыт сайт, а не приложение. */
       var native = !!(window.__isNativeApp && window.__isNativeApp());
       lines.push('Сборка: ' + CONFIG.BUILD);
       lines.push('Где открыто: ' + (native ? 'ПРИЛОЖЕНИЕ (APK)' : 'САЙТ в браузере'));
@@ -5501,13 +5556,8 @@
         (window.AndroidContacts && typeof window.AndroidContacts.readContacts === 'function'
           ? 'есть (список внутри приложения)'
           : (window.AndroidContacts ? 'старый, только по одному контакту' : 'НЕТ')));
-      lines.push('Вход через Яндекс: ' +
-        (window.AndroidBridge && typeof window.AndroidBridge.startYandexAuth === 'function'
-          ? 'окно внутри приложения'
-          : 'через браузер'));
       lines.push('Отступы из Android: ' +
         (document.documentElement.getAttribute('data-native-insets') ? 'да' : 'нет'));
-      // Откуда приложение взяло страницу: с сайта или из вшитой копии
       if (window.AndroidBridge && typeof window.AndroidBridge.sourceMode === 'function') {
         var mode = '';
         try { mode = window.AndroidBridge.sourceMode(); } catch (e) { mode = ''; }
@@ -5515,15 +5565,13 @@
           (mode === 'remote' ? 'сайт GitHub Pages (обновляется сам)'
                              : 'встроенная копия в APK (нет связи с сайтом)'));
       }
-      lines.push('Аккаунтов на устройстве: ' + Auth.accountsCount());
       lines.push('Записей на устройстве: ' + Cloud.localCount() +
         ' (клиентов ' + State.clients.length +
         ', занятий ' + State.classes.length +
         ', членов клуба ' + State.clubMembers.length + ')');
       lines.push('Первая синхронизация: ' + (Cloud._initialSyncDone ? 'выполнена' : 'ещё нет'));
       if (Cloud._lastSyncReason) lines.push('Итог синхронизации: ' + Cloud._lastSyncReason);
-      if (Cloud._lastPullError) lines.push('Чтение с Диска не прошло: ' + Cloud._lastPullError);
-      if (Cloud._lastPullVia) lines.push('Файл прочитан способом: ' + Cloud._lastPullVia);
+      if (Cloud._lastPullError) lines.push('Чтение с сервера не прошло: ' + Cloud._lastPullError);
       lines.push('—');
 
       var user = State.currentUser;
@@ -5531,219 +5579,32 @@
       lines.push('Аккаунтов на устройстве: ' + Auth.accountsCount());
       lines.push('Хранилище: ' + (Storage.available ? 'работает' : 'НЕДОСТУПНО — данные не сохранятся!'));
       lines.push('Адрес страницы: ' + location.origin);
-      lines.push('Тип входа: ' + (user && user.yandexId ? 'Яндекс ID' : 'локальный (пароль)'));
+      lines.push('Тип входа: ' + (user && user.loginKind === 'yandex' ? 'Яндекс ID' : 'телефон/email'));
+      lines.push('Токен сервера: ' + (user && user.token ? 'есть' : 'НЕТ — войдите заново'));
+      if (!this.canSync()) return lines.join('\n');
 
-      var token = Auth.getYandexToken();
-      lines.push('Токен Яндекса: ' + (token ? 'есть' : 'НЕТ — войдите через Яндекс ID'));
-      if (!token) return lines.join('\n');
-
-      // Проверяем, выдан ли токен с правом на папку приложения
-      try {
-        var res = await fetch('https://cloud-api.yandex.net/v1/disk/resources?path=' +
-          encodeURIComponent('app:/') + '&limit=1', {
-          headers: { Authorization: 'OAuth ' + token }
-        });
-        if (res.status === 403) {
-          lines.push('Доступ к Диску: ЗАПРЕЩЁН (403).');
-          lines.push('Причина: у приложения на oauth.yandex.ru не включено право');
-          lines.push('«Доступ к папке приложения на Диске» (cloud_api:disk.app_folder),');
-          lines.push('либо токен выдан до его включения — выйдите и войдите заново.');
-        } else if (res.status === 401) {
-          lines.push('Доступ к Диску: токен недействителен (401) — войдите заново.');
-        } else if (res.ok || res.status === 404) {
-          lines.push('Доступ к Диску: ОК');
-          var file = await fetch('https://cloud-api.yandex.net/v1/disk/resources?path=' +
-            encodeURIComponent(this.PATH), { headers: { Authorization: 'OAuth ' + token } });
-          if (file.status === 404) {
-            lines.push('Файл данных в облаке: пока нет (будет создан при первом сохранении)');
-          } else if (file.ok) {
-            var meta = await file.json();
-            lines.push('Файл данных в облаке: есть, изменён ' +
-              new Date(meta.modified).toLocaleString(I18N.locale()));
-            lines.push('Размер: ' + (meta.size || 0) + ' байт');
-            // Реальная попытка прочитать файл — самое важное место
-            var test = await this.pullEx();
-            if (test.status === 'ok') {
-              lines.push('Чтение файла: УСПЕШНО' +
-                (this._lastPullVia ? ' (способ: ' + this._lastPullVia + ')' : '') +
-                ', записей ' + this.countRecords(test.data));
-            } else if (test.status === 'missing') {
-              lines.push('Чтение файла: файла нет');
-            } else {
-              lines.push('Чтение файла: НЕ УДАЛОСЬ');
-              lines.push('  ' + (test.reason || 'причина неизвестна'));
-            }
-          } else {
-            lines.push('Файл данных в облаке: ошибка ' + file.status);
-          }
-        } else {
-          lines.push('Доступ к Диску: неожиданный ответ ' + res.status);
-        }
-      } catch (e) {
-        lines.push('Доступ к Диску: сеть недоступна (' + e.message + ')');
+      var test = await this.pullEx();
+      if (test.status === 'ok') {
+        lines.push('Чтение данных с сервера: УСПЕШНО, записей ' + this.countRecords(test.data));
+      } else if (test.status === 'missing') {
+        lines.push('Чтение данных с сервера: на сервере пока пусто');
+      } else {
+        lines.push('Чтение данных с сервера: НЕ УДАЛОСЬ (' + (test.reason || 'причина неизвестна') + ')');
       }
       return lines.join('\n');
     },
 
-    async _api(method, url, body, isBinary) {
-      var token = Auth.getYandexToken();
-      if (!token) throw new Error('Нет токена Яндекс');
-      var opts = {
-        method: method,
-        headers: { Authorization: 'OAuth ' + token }
-      };
-      if (body != null && !isBinary) {
-        opts.headers['Content-Type'] = 'application/json';
-        opts.body = typeof body === 'string' ? body : JSON.stringify(body);
-      } else if (body != null && isBinary) {
-        opts.body = body;
-      }
-      var res = await fetch(url, opts);
-      return res;
-    },
-
-    /** Скачать данные с Диска (null если файла нет) */
-    /**
-     * Скачать файл с Диска и ЧЕСТНО сказать, что произошло.
-     *
-     * Раньше здесь был один общий null и на «файла нет», и на «запрос упал».
-     * Из-за этого одна неудачная попытка скачивания выглядела как чистый Диск,
-     * приложение бодро заливало туда своё пустое состояние и стирало всё.
-     * Теперь состояния разделены:
-     *   ok      — файл скачан, данные в .data
-     *   missing — файла действительно нет (404)
-     *   error   — спросить не получилось; трогать облако НЕЛЬЗЯ
-     */
-    /**
-     * Скачать сам файл по ссылке, выданной Диском.
-     *
-     * ЗДЕСЬ И БЫЛА ПОЛОМКА. Диск отдаёт ссылку на отдельный сервер
-     * (downloader.disk.yandex.ru), и обычный fetch до него из браузера может
-     * не дойти: то ссылка приходит по http на https-странице, то сервер не
-     * присылает заголовки, которые браузер требует для чужого домена.
-     * Метаданные при этом читаются прекрасно — поэтому «Доступ к Диску: ОК»
-     * соседствовал с «Чтение не прошло».
-     *
-     * Пробуем по очереди три пути и запоминаем, что именно не сработало.
-     */
-    async _downloadJson(href) {
-      var errors = [];
-      var url = String(href || '');
-      // http на https-странице браузер просто блокирует
-      if (url.indexOf('http://') === 0) url = 'https://' + url.slice(7);
-
-      // Способ 1 — обычный запрос
-      try {
-        var r = await fetch(url);
-        if (r.ok) {
-          var d1 = await r.json();
-          if (d1 && typeof d1 === 'object') return { ok: true, data: d1, via: 'fetch' };
-          errors.push('fetch:не-json');
-        } else {
-          errors.push('fetch:' + r.status);
-        }
-      } catch (e) {
-        errors.push('fetch:' + ((e && e.message) || 'сбой'));
-      }
-
-      // Способ 2 — через нативную обёртку (только в APK).
-      // Скачивает сам Android, ограничения браузера на него не действуют.
-      if (window.AndroidBridge && typeof window.AndroidBridge.fetchText === 'function') {
-        try {
-          var txt = window.AndroidBridge.fetchText(url);
-          if (txt && txt.charAt(0) === '{') {
-            var d2 = JSON.parse(txt);
-            if (d2 && typeof d2 === 'object') return { ok: true, data: d2, via: 'android' };
-          }
-          errors.push('android:' + String(txt || 'пусто').slice(0, 40));
-        } catch (e) {
-          errors.push('android:' + ((e && e.message) || 'сбой'));
-        }
-      }
-
-      // Способ 3 — XMLHttpRequest
-      try {
-        var t = await new Promise(function (resolve, reject) {
-          var x = new XMLHttpRequest();
-          x.open('GET', url, true);
-          x.timeout = 20000;
-          x.onload = function () {
-            if (x.status >= 200 && x.status < 300) resolve(x.responseText);
-            else reject(new Error(String(x.status)));
-          };
-          x.onerror = function () { reject(new Error('сеть')); };
-          x.ontimeout = function () { reject(new Error('таймаут')); };
-          x.send();
-        });
-        var d3 = JSON.parse(t);
-        if (d3 && typeof d3 === 'object') return { ok: true, data: d3, via: 'xhr' };
-        errors.push('xhr:не-json');
-      } catch (e) {
-        errors.push('xhr:' + ((e && e.message) || 'сбой'));
-      }
-
-      return { ok: false, errors: errors };
-    },
-
-    /** Взять ссылку на файл вторым способом — из карточки ресурса */
-    async _hrefFromResource() {
-      try {
-        var res = await this._api('GET',
-          'https://cloud-api.yandex.net/v1/disk/resources?path=' +
-          encodeURIComponent(this.PATH) + '&fields=file');
-        if (!res.ok) return null;
-        var meta = await res.json();
-        return meta && meta.file ? meta.file : null;
-      } catch (e) {
-        return null;
-      }
-    },
-
     async pullEx() {
       if (!this.canSync()) return { status: 'error', reason: 'no-token' };
-      try {
-        var meta = await this._api('GET',
-          'https://cloud-api.yandex.net/v1/disk/resources/download?path=' + encodeURIComponent(this.PATH));
-
-        if (meta.status === 404) return { status: 'missing' };
-
-        if (!meta.ok) {
-          var errText = '';
-          try { errText = await meta.text(); } catch (e) {}
-          console.warn('[Cloud.pullEx] meta', meta.status, errText);
-          if (meta.status === 401 || meta.status === 403) {
-            Auth.clearYandexToken();
-            UI.showToast('Сессия Яндекс истекла — войдите снова');
-            return { status: 'error', reason: 'auth' };
-          }
-          return { status: 'error', reason: 'http-' + meta.status };
-        }
-
-        var info = await meta.json();
-        var href = info && info.href;
-
-        var got = href ? await this._downloadJson(href) : { ok: false, errors: ['нет ссылки'] };
-
-        // Не вышло — просим ссылку другим методом и пробуем ещё раз
-        if (!got.ok) {
-          var alt = await this._hrefFromResource();
-          if (alt && alt !== href) {
-            var got2 = await this._downloadJson(alt);
-            if (got2.ok) got = got2;
-            else got.errors = got.errors.concat(got2.errors || []);
-          }
-        }
-
-        if (!got.ok) {
-          return { status: 'error', reason: 'download [' + got.errors.join(' | ') + ']' };
-        }
-
-        this._lastPullVia = got.via || '';
-        return { status: 'ok', data: got.data };
-      } catch (e) {
-        console.error('[Cloud.pullEx]', e);
-        return { status: 'error', reason: 'network' };
+      var res = await Api.get('/api/data', true);
+      if (res.ok) return { status: 'ok', data: res.data };
+      if (res.status === 404) return { status: 'missing' };
+      if (res.status === 401) {
+        State.currentUser.token = null;
+        UI.showToast('Сессия истекла — войдите снова');
+        return { status: 'error', reason: 'auth' };
       }
+      return { status: 'error', reason: res.networkError ? 'network' : ('http-' + res.status) };
     },
 
     /**
@@ -5796,31 +5657,16 @@
           clubGroups: State.clubGroups,
           incomes: State.incomes,
           settings: State.settings,
-          updatedAt: new Date().toISOString(),
-          userId: State.currentUser && State.currentUser.id
+          updatedAt: new Date().toISOString()
         };
-        var body = JSON.stringify(payload);
-        // Получить URL для загрузки
-        var up = await this._api('GET',
-          'https://cloud-api.yandex.net/v1/disk/resources/upload?path=' + encodeURIComponent(this.PATH) + '&overwrite=true');
-        if (up.status === 401 || up.status === 403) {
-          Auth.clearYandexToken();
-          UI.showToast('Сессия Яндекс истекла — войдите снова для синхронизации');
+        var res = await Api.put('/api/data', payload, true);
+        if (res.status === 401) {
+          State.currentUser.token = null;
+          UI.showToast('Сессия истекла — войдите снова для синхронизации');
           return false;
         }
-        if (!up.ok) {
-          console.warn('[Cloud.push] upload href', up.status, await up.text());
-          return false;
-        }
-        var upInfo = await up.json();
-        if (!upInfo.href) return false;
-        var put = await fetch(upInfo.href, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: body
-        });
-        if (!put.ok) {
-          console.warn('[Cloud.push] put', put.status);
+        if (!res.ok) {
+          console.warn('[Cloud.push]', res.status, res.error);
           return false;
         }
         this._lastPush = Date.now();
@@ -5859,18 +5705,18 @@
      */
     async syncOnLogin() {
       if (!this.canSync()) return { ok: false, reason: 'no-token' };
-      UI.showToast('Синхронизация с Яндекс.Диском…');
+      UI.showToast('Синхронизация с облаком…');
 
       var localN = this.localCount();
       var pulled = await this.pullExRetry(3);
 
-      // Не смогли даже спросить Диск — НИЧЕГО не отправляем и не стираем.
+      // Не смогли даже спросить сервер — НИЧЕГО не отправляем и не стираем.
       // _initialSyncDone остаётся false, поэтому автоотправка тоже заблокирована.
       if (pulled.status === 'error') {
         this._lastPullError = pulled.reason || 'unknown';
-        console.warn('[syncOnLogin] Диск недоступен:', pulled.reason);
-        UI.showToast('Диск не ответил — данные не тронуты. Если данные тут есть, нажмите «Отправить в облако»');
-        return { ok: false, reason: 'disk-unavailable', detail: pulled.reason };
+        console.warn('[syncOnLogin] сервер недоступен:', pulled.reason);
+        UI.showToast('Сервер не ответил — данные не тронуты. Если данные тут есть, нажмите «Отправить в облако»');
+        return { ok: false, reason: 'server-unavailable', detail: pulled.reason };
       }
 
       this._lastPullError = '';
@@ -5879,7 +5725,7 @@
 
       var result;
       if (!remote) {
-        // Файла на Диске действительно нет (404)
+        // На сервере действительно ничего нет (404)
         this._initialSyncDone = true;
         if (localN === 0) {
           // И заливать нечего — это чистый старт, всё в порядке
@@ -5889,7 +5735,7 @@
           result = { ok: okNew, reason: okNew ? 'uploaded-local' : 'push-failed' };
         }
       } else if (remoteN === 0 && localN > 0) {
-        // В облаке пусто, а здесь есть данные — облако НЕ применяем, а чиним его
+        // На сервере пусто, а здесь есть данные — облако НЕ применяем, а чиним его
         this._initialSyncDone = true;
         var okFix = await this.push();
         UI.showToast('В облаке было пусто — загрузили данные с устройства');
@@ -8291,9 +8137,7 @@
         this.updateContactsStatus();
         var el = document.getElementById('syncStatus');
         if (el) {
-          if (Cloud.canSync()) el.textContent = '☁ Активна (Яндекс.Диск)';
-          else if (State.currentUser && State.currentUser.yandexId) el.textContent = 'Нужно войти через Яндекс снова (токен истёк)';
-          else el.textContent = 'Только локально — войдите через Яндекс ID для синхронизации';
+          el.textContent = Cloud.canSync() ? '☁ Активна' : 'Нужно войти снова, чтобы включить синхронизацию';
         }
       }
     },
@@ -9522,12 +9366,32 @@
         source: source || 'unknown',
         since: new Date().toISOString()
       });
+      if (State.currentUser && State.currentUser.token) {
+        Api.post('/api/subscription/activate', { source: source, days: days }, true);
+      }
       try { UI.renderSubscription(); } catch (e) {}
     },
 
     deactivate: function () {
       this._save({ plan: 'free', until: null, source: null, since: null });
+      if (State.currentUser && State.currentUser.token) {
+        Api.post('/api/subscription/deactivate', {}, true);
+      }
       try { UI.renderSubscription(); } catch (e) {}
+    },
+
+    /** Подтянуть актуальный статус с сервера — продление на другом устройстве
+        должно быть видно и здесь, без ручных действий. */
+    refreshFromServer: async function () {
+      if (!(State.currentUser && State.currentUser.token)) return;
+      var res = await Api.get('/api/me', true);
+      if (!res.ok || !res.data || !res.data.sub) return;
+      this._save({
+        plan: res.data.sub.plan === 'pro' ? 'pro' : 'free',
+        until: res.data.sub.until,
+        source: res.data.sub.source,
+        since: res.data.sub.since
+      });
     }
   };
 
@@ -9832,7 +9696,7 @@
         case 'logout': {
           UI.ask({
             icon: '👋', title: 'Выйти из аккаунта?',
-            text: 'Данные в облаке (Яндекс.Диск) сохранятся.', okText: 'Выйти'
+            text: 'Данные в облаке сохранятся.', okText: 'Выйти'
           }).then(function (yes) {
             if (!yes) return;
             Auth.logout();
@@ -9853,7 +9717,7 @@
         case 'cloud-sync-now': {
           (async function () {
             if (!Cloud.canSync()) {
-              UI.showToast('Синхронизация доступна только после входа через Яндекс ID');
+              UI.showToast('Нужно войти снова, чтобы включить синхронизацию');
               return;
             }
             UI.showToast('Синхронизация…');
@@ -9873,7 +9737,7 @@
         case 'cloud-push-now': {
           (async function () {
             if (!Cloud.canSync()) {
-              UI.showToast('Синхронизация доступна только после входа через Яндекс ID');
+              UI.showToast('Нужно войти снова, чтобы включить синхронизацию');
               return;
             }
             var n = Cloud.localCount();
@@ -11810,25 +11674,23 @@
     document.getElementById('authGate').classList.add('hidden');
     document.getElementById('appShell').classList.remove('hidden');
 
-    // Облачная синхронизация для Яндекс-аккаунтов
-    if (user.yandexId && Auth.getYandexToken()) {
+    // Облачная синхронизация — для любого аккаунта, подтверждённого сервером
+    if (user.token) {
+      try { await Sub.refreshFromServer(); } catch (e) { console.error('[Sub.refreshFromServer]', e); }
       try {
         var syncRes = await Cloud.syncOnLogin();
         if (syncRes.ok && syncRes.reason === 'pulled') {
-          UI.showToast('Данные загружены с Яндекс.Диска');
+          UI.showToast('Данные загружены с сервера');
         } else if (syncRes.ok && syncRes.reason === 'uploaded-local') {
           UI.showToast('Локальные данные сохранены в облако');
-        } else if (!syncRes.ok && syncRes.reason === 'no-token') {
-          /* noop */
         }
       } catch (e) {
         console.error('[syncOnLogin]', e);
         UI.showToast('Не удалось синхронизировать с облаком');
       }
-    } else if (!user.yandexId) {
-      // Локальный аккаунт — напомнить про ограничения
+    } else {
       setTimeout(function () {
-        UI.showToast('Локальный аккаунт: данные только на этом устройстве');
+        UI.showToast('Аккаунт без облака: данные только на этом устройстве');
       }, 600);
     }
 
@@ -11984,12 +11846,6 @@
 
   window.__onYandexToken = async function (token, expiresIn) {
     if (!token) { UI.showToast('Токен не получен'); return; }
-    try {
-      localStorage.setItem('dance_trainer_ya_token', token);
-      if (expiresIn) {
-        localStorage.setItem('dance_trainer_ya_token_exp', String(Date.now() + parseInt(expiresIn, 10) * 1000));
-      }
-    } catch (e) {}
     try {
       window.location.hash = 'access_token=' + encodeURIComponent(token) +
         (expiresIn ? '&expires_in=' + encodeURIComponent(expiresIn) : '');
