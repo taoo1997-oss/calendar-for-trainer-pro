@@ -3163,7 +3163,7 @@
   const CONFIG = {
     /* Номер сборки. Меняется при каждой правке — виден внизу Настроек.
        Если на экране старый номер, значит браузер отдаёт кэш, а не новый файл. */
-    BUILD: '2026-09-07 · 72',
+    BUILD: '2026-09-07 · 73',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -3759,10 +3759,11 @@
       'Tap ⋮ (three dots) in the top-right corner of the browser',
     'Выберите «Установить приложение» или «Добавить на главный экран»':
       'Choose "Install app" or "Add to Home screen"',
-    'Яндекс Браузер не установит веб-приложение': 'Yandex Browser won’t install this as an app',
-    'Он умеет только добавлять обычный ярлык, который снова открывает страницу в браузере — без этого установка на экран «Домой» не сработает по-настоящему.':
-      'It can only add a plain shortcut that reopens the page in the browser — a real Home Screen install won’t work there.',
-    'Перейти в Chrome': 'Open in Chrome',
+    'Для установки веб-приложения на рабочий стол перейдите в Хром':
+      'To install the web app on your Home Screen, switch to Chrome',
+    'Яндекс установит обычный ярлык сайта — он снова открывает страницу в браузере, а не отдельным приложением.':
+      'Yandex will only add a plain site shortcut — it reopens the page in the browser instead of a separate app.',
+    'Перейти': 'Open',
 
     /* Расписание */
     '📋 Копировать неделю': '📋 Copy week',
@@ -8112,18 +8113,6 @@
 
       var platform = PwaInstall.platform();
 
-      if (platform === 'android' && PwaInstall.isYandexBrowser()) {
-        box.innerHTML =
-          '<div class="storage-warn" style="margin-bottom:0;">' +
-            '<strong>⚠️ ' + t('Яндекс Браузер не установит веб-приложение') + '</strong>' +
-            t('Он умеет только добавлять обычный ярлык, который снова открывает страницу в браузере — без этого установка на экран «Домой» не сработает по-настоящему.') +
-            '<button type="button" class="btn btn-primary btn-block" style="margin-top:12px;" data-action="pwa-open-chrome">' +
-              '🌐 ' + t('Перейти в Chrome') +
-            '</button>' +
-          '</div>';
-        return;
-      }
-
       var intro = '<p class="text-sm text-muted" style="margin-bottom:10px;">' +
         t('Добавьте CoachCalendar на экран «Домой» — откроется как обычное приложение, без строки браузера.') +
         '</p>';
@@ -9922,8 +9911,26 @@
           break;
         case 'profile-save': Controllers.saveProfile(); break;
         case 'profile-clear': UI.closeModal('authModal'); break;
-        case 'pwa-install': PwaInstall.promptInstall(); break;
-        case 'pwa-open-chrome': window.location.href = PwaInstall.chromeIntentUrl(); break;
+        case 'pwa-install': {
+          /* Яндекс.Браузер тоже присылает это событие, но у него "установка"
+             на деле — обычный ярлык-закладка (см. Auth/PwaInstall выше и
+             подтверждение из поддержки Яндекса в plans). Спрашиваем заранее,
+             а не молча ставим бесполезный ярлык. */
+          if (PwaInstall.isYandexBrowser()) {
+            UI.ask({
+              icon: '🌐',
+              title: 'Для установки веб-приложения на рабочий стол перейдите в Хром',
+              text: 'Яндекс установит обычный ярлык сайта — он снова открывает страницу в браузере, а не отдельным приложением.',
+              okText: 'Перейти'
+            }).then(function (yes) {
+              if (yes) window.location.href = PwaInstall.chromeIntentUrl();
+              else PwaInstall.promptInstall();
+            });
+          } else {
+            PwaInstall.promptInstall();
+          }
+          break;
+        }
 
         /* —— СИНХРОНИЗАЦИЯ —— */
         case 'cloud-sync-now': {
@@ -11912,7 +11919,11 @@
     /** intent-ссылка открывает ТУ ЖЕ страницу в Chrome, если он установлен. */
     chromeIntentUrl() {
       var target = (location.href || '').replace(/^https?:\/\//, '');
-      return 'intent://' + target + '#Intent;scheme=https;package=com.android.chrome;end';
+      // S.browser_fallback_url обязателен для части браузеров: без него
+      // Android-система может просто отказаться разбирать intent-ссылку.
+      // Если Chrome не установлен — уводит на его страницу в Play Store.
+      var fallback = encodeURIComponent('https://play.google.com/store/apps/details?id=com.android.chrome');
+      return 'intent://' + target + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + fallback + ';end';
     },
     async promptInstall() {
       var e = this.deferredPrompt;
