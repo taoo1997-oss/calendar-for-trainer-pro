@@ -3263,7 +3263,7 @@
   const CONFIG = {
     /* Номер сборки. Меняется при каждой правке — виден внизу Настроек.
        Если на экране старый номер, значит браузер отдаёт кэш, а не новый файл. */
-    BUILD: '2026-09-07 · 78',
+    BUILD: '2026-09-08 · 79',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -11267,6 +11267,64 @@
       var bv = document.getElementById('buildVersion');
       if (bv) bv.textContent = 'сборка ' + CONFIG.BUILD;
       console.log('[CoachCalendar] build ' + CONFIG.BUILD);
+
+      /* —— Скрытая справка о геометрии экрана ——
+
+         Пять нажатий подряд по строке со сборкой. На телефоне консоли нет,
+         а разбирать вопросы вида «откуда снизу белая полоса» без чисел —
+         гадание: непонятно, наша это область или системная панель жестов,
+         которую рисует Chrome за пределами страницы. Здесь ровно те числа,
+         по которым это видно, и они же уходят в буфер обмена. */
+      if (bv) {
+        var taps = 0, tapTimer = null;
+        bv.style.cursor = 'pointer';
+        bv.addEventListener('click', function () {
+          clearTimeout(tapTimer);
+          tapTimer = setTimeout(function () { taps = 0; }, 2000);
+          if (++taps < 5) return;
+          taps = 0;
+          clearTimeout(tapTimer);
+
+          function envPx(side) {
+            var probe = document.createElement('div');
+            probe.style.cssText = 'position:fixed;left:-9999px;bottom:0;width:1px;' +
+              'height:env(safe-area-inset-' + side + ',0px);pointer-events:none;';
+            document.body.appendChild(probe);
+            var h = probe.getBoundingClientRect().height;
+            probe.parentNode.removeChild(probe);
+            return Math.round(h * 100) / 100;
+          }
+          function mode() {
+            var list = ['standalone', 'fullscreen', 'minimal-ui', 'browser'];
+            for (var i = 0; i < list.length; i++) {
+              try {
+                if (window.matchMedia('(display-mode: ' + list[i] + ')').matches) return list[i];
+              } catch (e) {}
+            }
+            return '—';
+          }
+          var cs = getComputedStyle(document.documentElement);
+          var scr = window.screen || {};
+          var lines = [
+            'сборка ' + CONFIG.BUILD,
+            'режим: ' + mode() + ' / ' + document.documentElement.getAttribute('data-launch'),
+            'экран: ' + (scr.width || 0) + '×' + (scr.height || 0) + ', dpr ' + (window.devicePixelRatio || 0),
+            'окно: ' + window.innerWidth + '×' + window.innerHeight,
+            'не входит в окно по высоте: ' + Math.round((scr.height || 0) - window.innerHeight),
+            'вырезы: сверху ' + envPx('top') + ', снизу ' + envPx('bottom'),
+            '--sab: ' + cs.getPropertyValue('--sab').trim() + ', --sab-nav: ' + cs.getPropertyValue('--sab-nav').trim(),
+            'тема: ' + document.documentElement.getAttribute('data-theme') + ', color-scheme: ' + cs.colorScheme,
+            'фон страницы: ' + cs.backgroundColor,
+            'фон панели: ' + (function () {
+              var nav = document.querySelector('.bottom-nav');
+              return nav ? getComputedStyle(nav).backgroundColor : '—';
+            })()
+          ];
+          var text = lines.join('\n');
+          try { navigator.clipboard.writeText(text); } catch (e) {}
+          UI.notify({ icon: '📐', title: 'Геометрия экрана', text: text + '\n\nСкопировано в буфер обмена.' });
+        });
+      }
       /* Ручка для автотестов и разбора проблем: из консоли браузера
          доступно window.__dt.State / .Services / .Domain / .UI */
       try {
