@@ -3105,7 +3105,7 @@
   const CONFIG = {
     /* Номер сборки. Меняется при каждой правке — виден внизу Настроек.
        Если на экране старый номер, значит браузер отдаёт кэш, а не новый файл. */
-    BUILD: '2026-09-07 · 70',
+    BUILD: '2026-09-07 · 71',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -5050,7 +5050,7 @@
      * result.networkError — это важно там, где нельзя молча стереть
      * локальные данные из-за временной недоступности сервера (Cloud).
      */
-    async call(method, path, body, auth) {
+    async call(method, path, body, auth, extra) {
       var opts = { method: method, headers: {} };
       if (body !== undefined) {
         opts.headers['Content-Type'] = 'application/json';
@@ -5061,6 +5061,12 @@
         if (!token) return { ok: false, status: 0, error: 'Не авторизовано' };
         opts.headers['Authorization'] = 'Bearer ' + token;
       }
+      /* keepalive: запрос переживёт закрытие/сворачивание вкладки — нужно
+         для срочной отправки при уходе со страницы (см. saveOnLeave),
+         иначе обычный debounce-пуш может не успеть уйти в сеть, если
+         Android выгрузит вкладку раньше. Лимит спецификации — 64 КБ на
+         тело, поэтому включаем это только там, где это оправданно. */
+      if (extra && extra.keepalive) opts.keepalive = true;
       var res;
       try {
         res = await fetch(CONFIG.API_BASE + path, opts);
@@ -5076,7 +5082,7 @@
     },
     get(path, auth) { return this.call('GET', path, undefined, auth); },
     post(path, body, auth) { return this.call('POST', path, body || {}, auth); },
-    put(path, body, auth) { return this.call('PUT', path, body || {}, auth); },
+    put(path, body, auth, extra) { return this.call('PUT', path, body || {}, auth, extra); },
     patch(path, body, auth) { return this.call('PATCH', path, body || {}, auth); }
   };
 
@@ -5690,7 +5696,7 @@
      * allowEmpty = true разрешено только при осознанной очистке данных самим
      * человеком, и вызывается лишь из соответствующей кнопки.
      */
-    async push(allowEmpty) {
+    async push(allowEmpty, urgent) {
       if (!this.canSync()) return false;
       if (this._syncing) return false;
 
@@ -5710,7 +5716,7 @@
           settings: State.settings,
           updatedAt: new Date().toISOString()
         };
-        var res = await Api.put('/api/data', payload, true);
+        var res = await Api.put('/api/data', payload, true, urgent ? { keepalive: true } : undefined);
         if (res.status === 401) {
           State.currentUser.token = null;
           UI.showToast('Сессия истекла — войдите снова для синхронизации');
@@ -5792,22 +5798,43 @@
         UI.showToast('В облаке было пусто — загрузили данные с устройства');
         result = { ok: okFix, reason: 'restored-cloud', localCount: localN };
       } else if (remoteN > 0 && localN === 0) {
-        // Обычный случай на новом устройстве — забираем облако
-        this._applyRemote(remote);
-        this._initialSyncDone = true;
-        result = { ok: true, reason: 'pulled', updatedAt: remote.updatedAt, count: remoteN };
+        /* Обычный случай на новом устройстве — забираем облако. Считаем
+           localN ещё раз прямо перед применением: pullExRetry — это сеть,
+           за это время человек мог успеть что-то добавить руками. */
+        if (this.localCount() > 0) {
+          this._initialSyncDone = true;
+          await this.push();
+          result = { ok: true, reason: 'pushed-newer-local', count: this.localCount() };
+        } else {
+          this._applyRemote(remote);
+          this._initialSyncDone = true;
+          result = { ok: true, reason: 'pulled', updatedAt: remote.updatedAt, count: remoteN };
+        }
       } else if (remoteN > 0 && localN > 0) {
-        // Данные есть и там, и там — берём копию посвежее
+        /* Данные есть и там, и там. Раньше решение принималось только по
+           меткам времени — а enterApp() (и с ним syncOnLogin) выполняется
+           при КАЖДОМ открытии/перезагрузке вкладки, не только при первом
+           входе. Если метка местной копии по любой причине не совпала
+           (не успела проставиться, гонка с ещё не улетевшим пушем и т.п.),
+           более полная локальная копия могла молча стереться более
+           скудной с сервера — так и потерялось расписание.
+           Теперь удалённая копия побеждает, только если в ней НЕ МЕНЬШЕ
+           записей, чем локально прямо сейчас (пересчитано заново — за
+           время сетевого запроса человек мог успеть что-то добавить) —
+           так откат назад по количеству записей невозможен в принципе,
+           что бы ни показали часы. */
+        var localNNow = this.localCount();
         var localAt = State.settings && State.settings.updatedAt;
         var remoteAt = remote.updatedAt;
-        var takeRemote = !localAt || (remoteAt && String(remoteAt) >= String(localAt));
+        var remoteNewerByTime = !localAt || (remoteAt && String(remoteAt) >= String(localAt));
+        var takeRemote = remoteNewerByTime && remoteN >= localNNow;
         if (takeRemote) {
           this._applyRemote(remote);
           result = { ok: true, reason: 'pulled', updatedAt: remote.updatedAt, count: remoteN };
         } else {
           this._initialSyncDone = true;
           await this.push();
-          result = { ok: true, reason: 'pushed-newer-local', count: localN };
+          result = { ok: true, reason: 'pushed-newer-local', count: localNNow };
         }
       } else {
         // Пусто и там, и там — синхронизировать нечего
@@ -11355,6 +11382,17 @@
        чем потерять вечер занятий. */
     function saveOnLeave() {
       try { if (State.currentUser) State.persist(); } catch (e) {}
+      /* Обычный Cloud.schedulePush() ждёт 1.5с тишины — если Android
+         выгрузит вкладку раньше (а сворачивание/уход с экрана — самый
+         частый повод), несинхронизированная правка так и останется
+         только на этом устройстве. Здесь — досрочный пуш с keepalive,
+         чтобы запрос пережил закрытие вкладки. */
+      try {
+        if (State.currentUser && Cloud.canSync() && Cloud._initialSyncDone) {
+          clearTimeout(Cloud._pushTimer);
+          Cloud.push(false, true);
+        }
+      } catch (e) {}
     }
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'hidden') saveOnLeave();
