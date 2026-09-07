@@ -173,9 +173,13 @@
       --sat: env(safe-area-inset-top, 0px);
       --sar: env(safe-area-inset-right, 0px);
       --sab: env(safe-area-inset-bottom, 0px);
-      /* Отступ для нижней панели: полный вырез слишком высокий, под
-         индикатором дома достаточно 20px. Контенту оставляем полный. */
-      --sab-nav: min(var(--sab), 20px);
+      /* Раньше здесь стоял искусственный потолок в 20px — на части
+         Android-устройств (жестовая полоса выше 20px, особенно в
+         установленном PWA) под нижней панелью оставалась непрокрашенная
+         полоска цвета --bg вместо белого фона панели. Теперь используем
+         вырез целиком — панель окрашивает его сама (см. .bottom-nav ниже),
+         а иконки остаются на фиксированной высоте --nav-h, не съезжая. */
+      --sab-nav: var(--sab);
       --sal: env(safe-area-inset-left, 0px);
       --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
@@ -377,13 +381,19 @@
       background: var(--card);
       border-top: 1px solid var(--border);
       display: flex;
+      /* Иконки закреплены в зоне --nav-h у верхнего края панели; вырез
+         снизу — чистый отступ того же цвета фона, без иконок внутри него.
+         Так панель одного цвета всегда закрывает вырез целиком, а иконки
+         не съезжают выше при увеличении высоты выреза на конкретном
+         устройстве. */
+      align-items: flex-start;
       z-index: 100;
       padding-bottom: var(--sab-nav);
       padding-left: var(--sal);
       padding-right: var(--sar);
     }
     .nav-item {
-      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      flex: 1; height: var(--nav-h); display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 3px; border: none; background: none; color: var(--text-muted);
       font-size: 0.68rem; font-weight: 500; cursor: pointer; padding: 8px;
       letter-spacing: 0;
@@ -670,15 +680,55 @@
     .select-btn-caret { color: var(--text-muted); font-size: 0.7rem; }
 
     /* Настройки разделены на три вкладки — иначе один длинный свиток */
-    .settings-tabs {
-      margin-bottom: 22px;
-      /* Держим переключатель под шапкой: в разделе «Данные» он иначе
-         уезжает вверх, и вернуться к другим вкладкам можно только скроллом. */
-      position: sticky;
+    /* Вкладки настроек — зафиксированы под шапкой (не sticky: на части
+       Android-устройств sticky-переключатель уезжал вместе со страницей
+       и обрезал контент, который проезжал под ним внахлёст). Ниже —
+       отдельная прокручиваемая область .settings-body: контент никогда
+       не заходит под вкладки, а останавливается у их нижнего края. */
+    .settings-tabs-bar {
+      position: fixed;
       top: calc(var(--sat) + 58px);
+      left: 0; right: 0;
       z-index: 60;
       background: var(--bg);
       box-shadow: 0 6px 10px -8px rgba(0,0,0,0.25);
+      padding: 10px max(var(--sar), 12px) 10px max(var(--sal), 12px);
+    }
+    .settings-tabs {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    /* Высота .settings-tabs-bar = 10+10 (padding) + 43 (сам переключатель,
+       постоянная величина при неизменном шрифте) ≈ 63px. */
+    .settings-body {
+      position: fixed;
+      top: calc(var(--sat) + 58px + 63px);
+      bottom: calc(var(--nav-h) + var(--sab-nav));
+      left: 0; right: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 12px;
+      padding-left: max(var(--sal), 12px);
+      padding-right: max(var(--sar), 12px);
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    [data-device="desktop"] .settings-tabs-bar {
+      position: static;
+      background: none;
+      box-shadow: none;
+      padding: 0 0 22px;
+    }
+    [data-device="desktop"] .settings-tabs {
+      max-width: none;
+      margin: 0;
+    }
+    [data-device="desktop"] .settings-body {
+      position: static;
+      max-width: none;
+      padding: 0;
+      margin: 0;
+      overflow: visible;
     }
     .settings-group { display: none; }
     .settings-group.active { display: block; }
@@ -2035,6 +2085,10 @@
     }
     [data-device="desktop"] .nav-item {
       flex: 0 0 auto;
+      /* На телефоне высота иконки фиксирована (--nav-h), чтобы панель снизу
+         красилась одним цветом под вырезом камеры/жестов — в боковом меню
+         десктопа такой высоты не нужно, пункты сами по себе компактные. */
+      height: auto;
       flex-direction: row;
       justify-content: flex-start;
       gap: 12px;
@@ -2448,11 +2502,14 @@
     </div>
 
     <div id="section-settings" class="section" data-screen="settings">
-      <div class="seg-toggle settings-tabs" id="settingsTabs">
-        <button type="button" class="seg-btn active" data-action="settings-tab" data-settings-tab="account">Аккаунт</button>
-        <button type="button" class="seg-btn" data-action="settings-tab" data-settings-tab="look">Оформление</button>
-        <button type="button" class="seg-btn" data-action="settings-tab" data-settings-tab="data">Данные</button>
+      <div class="settings-tabs-bar">
+        <div class="seg-toggle settings-tabs" id="settingsTabs">
+          <button type="button" class="seg-btn active" data-action="settings-tab" data-settings-tab="account">Аккаунт</button>
+          <button type="button" class="seg-btn" data-action="settings-tab" data-settings-tab="look">Оформление</button>
+          <button type="button" class="seg-btn" data-action="settings-tab" data-settings-tab="data">Данные</button>
+        </div>
       </div>
+      <div class="settings-body" id="settingsBody">
 
       <div class="settings-group active" data-settings-group="account">
       <div class="card auth-card">
@@ -2574,6 +2631,7 @@
 
       <!-- Версия сборки — всегда в самом низу страницы -->
       <div id="buildVersion" class="build-version">сборка —</div>
+      </div>
     </div>
   </div>
 
@@ -3105,7 +3163,7 @@
   const CONFIG = {
     /* Номер сборки. Меняется при каждой правке — виден внизу Настроек.
        Если на экране старый номер, значит браузер отдаёт кэш, а не новый файл. */
-    BUILD: '2026-09-07 · 71',
+    BUILD: '2026-09-07 · 72',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -3701,6 +3759,10 @@
       'Tap ⋮ (three dots) in the top-right corner of the browser',
     'Выберите «Установить приложение» или «Добавить на главный экран»':
       'Choose "Install app" or "Add to Home screen"',
+    'Яндекс Браузер не установит веб-приложение': 'Yandex Browser won’t install this as an app',
+    'Он умеет только добавлять обычный ярлык, который снова открывает страницу в браузере — без этого установка на экран «Домой» не сработает по-настоящему.':
+      'It can only add a plain shortcut that reopens the page in the browser — a real Home Screen install won’t work there.',
+    'Перейти в Chrome': 'Open in Chrome',
 
     /* Расписание */
     '📋 Копировать неделю': '📋 Copy week',
@@ -8049,6 +8111,19 @@
       }
 
       var platform = PwaInstall.platform();
+
+      if (platform === 'android' && PwaInstall.isYandexBrowser()) {
+        box.innerHTML =
+          '<div class="storage-warn" style="margin-bottom:0;">' +
+            '<strong>⚠️ ' + t('Яндекс Браузер не установит веб-приложение') + '</strong>' +
+            t('Он умеет только добавлять обычный ярлык, который снова открывает страницу в браузере — без этого установка на экран «Домой» не сработает по-настоящему.') +
+            '<button type="button" class="btn btn-primary btn-block" style="margin-top:12px;" data-action="pwa-open-chrome">' +
+              '🌐 ' + t('Перейти в Chrome') +
+            '</button>' +
+          '</div>';
+        return;
+      }
+
       var intro = '<p class="text-sm text-muted" style="margin-bottom:10px;">' +
         t('Добавьте CoachCalendar на экран «Домой» — откроется как обычное приложение, без строки браузера.') +
         '</p>';
@@ -8222,8 +8297,13 @@
       /* Разделы разной высоты: когда прячется длинный, страница становится
          короче, и браузер сам подтягивает прокрутку — экран будто прыгает.
          Поэтому после нажатия честно уходим наверх. Просто открытие
-         «Настроек» прокрутку не трогает: там она и так наверху. */
+         «Настроек» прокрутку не трогает: там она и так наверху.
+         На телефоне прокручивается не страница, а .settings-body — свой
+         независимый контейнер под зафиксированными вкладками. */
       if (byUser) {
+        var body = this.$('settingsBody');
+        try { if (body) body.scrollTo({ top: 0, behavior: 'smooth' }); }
+        catch (e) { if (body) body.scrollTop = 0; }
         try { window.scrollTo({ top: 0, behavior: 'smooth' }); }
         catch (e) { window.scrollTo(0, 0); }
       }
@@ -9843,6 +9923,7 @@
         case 'profile-save': Controllers.saveProfile(); break;
         case 'profile-clear': UI.closeModal('authModal'); break;
         case 'pwa-install': PwaInstall.promptInstall(); break;
+        case 'pwa-open-chrome': window.location.href = PwaInstall.chromeIntentUrl(); break;
 
         /* —— СИНХРОНИЗАЦИЯ —— */
         case 'cloud-sync-now': {
@@ -11815,6 +11896,23 @@
       if (isIOS || isIpadOS) return 'ios';
       if (/Android/.test(ua)) return 'android';
       return 'desktop';
+    },
+    /**
+     * Яндекс.Браузер на Android принципиально не устанавливает сторонние
+     * PWA как отдельное приложение — только ярлык, который всегда
+     * открывает вкладку браузера. Это подтверждено самой поддержкой
+     * Яндекса, а не догадка: подсказывать здесь стандартные шаги
+     * бессмысленно, установки не будет никогда, каким бы правильным ни
+     * был манифест. На iOS все браузеры работают через WebKit — там
+     * ограничения нет, отличать не нужно.
+     */
+    isYandexBrowser() {
+      return /YaBrowser/.test(navigator.userAgent || '');
+    },
+    /** intent-ссылка открывает ТУ ЖЕ страницу в Chrome, если он установлен. */
+    chromeIntentUrl() {
+      var target = (location.href || '').replace(/^https?:\/\//, '');
+      return 'intent://' + target + '#Intent;scheme=https;package=com.android.chrome;end';
     },
     async promptInstall() {
       var e = this.deferredPrompt;
