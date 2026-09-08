@@ -67,7 +67,8 @@ test('фон заставки совпадает с фоном значка — 
   // тогда, когда background_color в точности равен фону самой картинки.
   const png = Buffer.from(j.icons[1].src.split(',')[1], 'base64');
   assert.strictEqual(png.slice(1, 4).toString('ascii'), 'PNG', 'значок 512 должен быть PNG');
-  assert.strictEqual(j.background_color.toLowerCase(), '#fdf2f4');
+  // Цвет светлой темы «Снег». Фон иконок перекрашен в него же — см. recolor.
+  assert.strictEqual(j.background_color.toLowerCase(), '#fcfbff');
 });
 
 test('фон нашей заставки в установленном режиме равен background_color', () => {
