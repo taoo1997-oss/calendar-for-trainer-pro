@@ -57,7 +57,7 @@
   -->
   <script>
     (function preboot() {
-      var BG = { light: '#f4f5f7', dark: '#1c1917', black: '#000000' };
+      var BG = { light: '#faf7fe', dark: '#1c1917', black: '#000000' };
       /* 'auto' — не тема, а «спросить телефон»: значение по умолчанию и
          для новых установок, и пока человек сам не выбрал в настройках.
          В data-theme и в BG уходит уже разрешённый light/dark. */
@@ -194,19 +194,19 @@
       --primary-light: #ffe4e6;
       --success: #10b981;
       --danger: #ef4444;
-      /* Палитра «Снег»: почти белый нейтральный холст, белые карточки,
-         реальная тень — карточки и кнопки заметно приподняты над фоном.
-         Акцент (--primary) выбирается отдельно в «Цвет приложения». */
-      --bg: #f4f5f7;
-      --card: #ffffff;
+      /* Светлая тема — ОДИН цвет на всё: холст, карточки, дорожку
+         переключателей и нижнюю панель. Это ровно цвет системного
+         подбородка (rgb 250,247,254) — снизу шва нет, и весь экран не
+         дробится на 4 почти-белых оттенка. Разделяет элементы не цвет,
+         а рамка (--border) и тень (--shadow); активная плитка
+         переключателя — единственное исключение, она чисто белая. */
+      --bg: #faf7fe;
+      --card: #faf7fe;
       --text: #1b1c1f;
       --text-muted: #6c7075;
-      --border: #e6e7ea;
-      --shadow: 0 1px 2px rgba(20,22,28,0.07), 0 4px 14px rgba(20,22,28,0.06);
-      /* Дорожка сегмент-переключателей (вкладки настроек, тумблер входа):
-         чуть темнее холста, чтобы белая активная плитка на ней читалась.
-         В тёмной/чёрной теме = прежний --bg, поведение не меняется. */
-      --track: #e9eaee;
+      --border: #e4e2ea;
+      --shadow: 0 1px 2px rgba(20,20,32,0.06), 0 3px 12px rgba(20,20,32,0.05);
+      --track: #faf7fe;
       --radius: 16px;
       --nav-h: 64px;
       /* Безопасные зоны. В Android WebView env(safe-area-inset-*) для статус-бара
@@ -568,10 +568,13 @@
       padding-left: 4px; padding-right: 4px;
       font-size: clamp(0.78rem, calc(6px + 1.53vw), 0.85rem);
     }
-    /* Активный раздел — акцентным цветом (как на макете): белая плитка,
-       текст --primary, реальная тень. Раньше текст был серый (var(--text))
-       и активная вкладка почти не отличалась от прочих. */
-    .seg-btn.active { background: var(--card); color: var(--primary); font-weight: 700; box-shadow: var(--shadow); }
+    /* Активный раздел: чисто белая плитка (единственное «ярче фона» пятно
+       в светлой теме — весь остальной экран в один цвет --card), текст
+       --primary, реальная тень. Раньше текст был серый и активная вкладка
+       не отличалась от прочих. */
+    .seg-btn.active { background: #ffffff; color: var(--primary); font-weight: 700; box-shadow: var(--shadow); }
+    [data-theme="dark"] .seg-btn.active,
+    [data-theme="black"] .seg-btn.active { background: var(--card); }
     .seg-btn:focus { outline: none; }
     .seg-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
@@ -1752,7 +1755,7 @@
     }
     /* «Авто» — половина светлой, половина тёмной: тема идёт от телефона */
     .theme-swatch.auto { background: linear-gradient(135deg, #ffffff 50%, #1c1917 50%); }
-    .theme-swatch.light { background: linear-gradient(135deg, #ffffff 50%, #f4f5f7 50%); }
+    .theme-swatch.light { background: linear-gradient(135deg, #ffffff 50%, #faf7fe 50%); }
     .theme-swatch.dark { background: linear-gradient(135deg, #292524 50%, #1c1917 50%); }
     .theme-swatch.black { background: linear-gradient(135deg, #141414 50%, #000000 50%); }
 
@@ -1932,7 +1935,12 @@
       padding: 14px 16px; border: 1.5px solid var(--border); border-radius: 14px;
       cursor: pointer; background: var(--card);
     }
-    .style-option.active { border-color: var(--primary); background: var(--primary-light); }
+    /* Активный стиль — только рамка акцентом; фон остаётся общим цветом
+       карточки (в светлой теме весь экран в один цвет). Розовую заливку
+       оставляем тёмным темам, где отдельный оттенок уместен. */
+    .style-option.active { border-color: var(--primary); background: var(--card); }
+    [data-theme="dark"] .style-option.active,
+    [data-theme="black"] .style-option.active { background: var(--primary-light); }
     .style-option strong { display: block; margin-bottom: 2px; font-weight: 500; font-size: 0.875rem; }
     .style-option span { font-size: 0.75rem; color: var(--text-muted); }
 
@@ -8190,8 +8198,8 @@
       /* Подложка самого окна приложения живёт в нативном коде и по умолчанию
          светлая — она и просвечивала белым по краям экрана. Передаём ей
          текущий цвет фона. */
-      var bgByTheme = { light: '#f4f5f7', dark: '#1c1917', black: '#000000' };
-      var bg = bgByTheme[themeName] || '#f4f5f7';
+      var bgByTheme = { light: '#faf7fe', dark: '#1c1917', black: '#000000' };
+      var bg = bgByTheme[themeName] || '#faf7fe';
       document.documentElement.style.backgroundColor = bg;
       /* color-scheme preboot ставит инлайном — иначе первый кадр приходит в
          системной схеме, а не в нашей. Инлайн перебивает правило
