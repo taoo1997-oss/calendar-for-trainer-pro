@@ -2842,6 +2842,8 @@
         <input type="file" id="importFile" accept="application/json" class="hidden">
         <button type="button" class="btn btn-secondary btn-block btn-sm mt-2" data-action="undo-cleanup">↩️ Отменить последнее удаление</button>
         <p class="text-sm text-muted" style="margin-top:6px;font-size:0.7rem;">Вернёт расписание к состоянию до очистки дня.</p>
+        <button type="button" class="btn btn-danger btn-block btn-sm mt-2" data-action="restore-before-sync">🛟 Вернуть данные до синхронизации</button>
+        <p class="text-sm text-muted" style="margin-top:6px;font-size:0.7rem;">Если после открытия приложения данные откатились — вернёт копию, сохранённую перед последней загрузкой с сервера.</p>
       </div>
       </div>
 
@@ -3385,7 +3387,7 @@
                 подсчёт денег, оплата, …).
        МИНОР  — мелкие доработки; ПОДНИМАТЬ на 1 при КАЖДОЙ новой выкладке.
        В интерфейсе называется «версия», не «сборка». */
-    BUILD: '0.4.6',
+    BUILD: '0.4.7',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -4781,6 +4783,20 @@
       });
       try { if (typeof Cloud !== 'undefined') Cloud.schedulePush(); } catch (e) {}
     },
+    /** Сохранить как есть, НЕ трогая settings.updatedAt и НЕ ставя выгрузку.
+        Для случая «только что применили серверную копию»: локальное
+        состояние теперь равно облачному. */
+    persistSynced() {
+      if (!this.currentUser) return;
+      Storage.saveKey(this.dataKey(), {
+        clients: this.clients,
+        classes: this.classes,
+        clubMembers: this.clubMembers,
+        clubGroups: this.clubGroups,
+        incomes: this.incomes,
+        settings: this.settings
+      });
+    },
     hydrate(data) {
       if (!data) {
         this.clients = [];
@@ -6031,6 +6047,20 @@
     /** После логина: подтянуть облако и слить с локальными данными */
     /** Применить облачный набор данных к приложению */
     _applyRemote(remote) {
+      /* Резервная копия местного состояния ПЕРЕД перезаписью серверным.
+         Если решение «взять облако» окажется неверным (расходятся часы,
+         несинхронизированные правки и т.п.) — человек вернёт её кнопкой
+         «Вернуть данные до синхронизации». Держим ровно один слепок. */
+      try {
+        if (this.localCount() > 0) {
+          Storage.saveKey(State.dataKey() + '_beforeSync', {
+            at: new Date().toISOString(),
+            clients: State.clients, classes: State.classes,
+            clubMembers: State.clubMembers, clubGroups: State.clubGroups,
+            incomes: State.incomes, settings: State.settings
+          });
+        }
+      } catch (e) {}
       if (Array.isArray(remote.clients)) State.clients = remote.clients;
       if (Array.isArray(remote.classes)) State.classes = remote.classes;
       if (Array.isArray(remote.clubMembers)) State.clubMembers = remote.clubMembers;
@@ -6039,7 +6069,11 @@
       if (remote.settings && typeof remote.settings === 'object') {
         State.settings = Object.assign({}, CONFIG.DEFAULT_SETTINGS, remote.settings);
       }
-      State.persist();
+      /* Сохраняем БЕЗ touch(): состояние сейчас идентично серверному, и
+         метку правки надо оставить серверную — иначе следующий вход
+         посчитает копию изменённой и затеет выгрузку (а при неверных
+         часах мог бы и перетереть). */
+      State.persistSynced();
       try { Services.migrateAbonementDates(); } catch (e) {}
       try { Services.cleanupOrphanAbonementSales(); } catch (e) {}
       try { Services.syncAllGroupClasses(); } catch (e) {}
@@ -6103,23 +6137,31 @@
           result = { ok: true, reason: 'pulled', updatedAt: remote.updatedAt, count: remoteN };
         }
       } else if (remoteN > 0 && localN > 0) {
-        /* Данные есть и там, и там. Раньше решение принималось только по
-           меткам времени — а enterApp() (и с ним syncOnLogin) выполняется
-           при КАЖДОМ открытии/перезагрузке вкладки, не только при первом
-           входе. Если метка местной копии по любой причине не совпала
-           (не успела проставиться, гонка с ещё не улетевшим пушем и т.п.),
-           более полная локальная копия могла молча стереться более
-           скудной с сервера — так и потерялось расписание.
-           Теперь удалённая копия побеждает, только если в ней НЕ МЕНЬШЕ
-           записей, чем локально прямо сейчас (пересчитано заново — за
-           время сетевого запроса человек мог успеть что-то добавить) —
-           так откат назад по количеству записей невозможен в принципе,
-           что бы ни показали часы. */
+        /* Данные есть и там, и там. syncOnLogin выполняется при КАЖДОМ
+           открытии вкладки, поэтому решать надо очень осторожно.
+
+           ГЛАВНОЕ ПРАВИЛО: если на устройстве есть правки, которых сервер
+           ещё НЕ получил, — серверную копию НЕ применяем никогда, только
+           доливаем свою. «Свежесть» серверной копии сравниваем по
+           settings.updatedAt ВНУТРИ блоба (это метка правки, которую
+           сервер реально принял от какого-то устройства), а НЕ по
+           верхнему remote.updatedAt — его push() проставляет заново при
+           каждой выгрузке, поэтому серверная копия всегда «новее» по нему,
+           и правки, сделанные после последнего пуша, молча терялись.
+           Плюс страховка по количеству: серверную копию не берём, если в
+           ней меньше записей, чем сейчас локально. */
         var localNNow = this.localCount();
         var localAt = State.settings && State.settings.updatedAt;
-        var remoteAt = remote.updatedAt;
-        var remoteNewerByTime = !localAt || (remoteAt && String(remoteAt) >= String(localAt));
-        var takeRemote = remoteNewerByTime && remoteN >= localNNow;
+        var remoteContentAt = remote.settings && remote.settings.updatedAt;
+
+        var localHasUnpushedEdits =
+          localAt && (!remoteContentAt || String(localAt) > String(remoteContentAt));
+
+        var takeRemote =
+          !localHasUnpushedEdits &&                 // на устройстве нет несинхронизированных правок
+          remoteN >= localNNow &&                   // серверная копия не беднее
+          (!remoteContentAt || !localAt || String(remoteContentAt) >= String(localAt));
+
         if (takeRemote) {
           this._applyRemote(remote);
           result = { ok: true, reason: 'pulled', updatedAt: remote.updatedAt, count: remoteN };
@@ -10315,6 +10357,47 @@
               UI.renderClients();
               UI.showToast('Данные возвращены');
             }
+          });
+          break;
+        }
+        case 'restore-before-sync': {
+          var bkey = State.dataKey() + '_beforeSync';
+          var bk = null;
+          try { bk = Storage.loadKey(bkey); } catch (e) {}
+          if (!bk || !Array.isArray(bk.classes)) {
+            UI.notify({
+              icon: '🕳',
+              title: 'Копии нет',
+              text: 'Копия «до синхронизации» сохраняется, только когда приложение реально забирает данные с сервера. Пока такого не было.'
+            });
+            break;
+          }
+          UI.ask({
+            danger: true,
+            icon: '🛟',
+            title: 'Вернуть данные до синхронизации?',
+            text: 'Копия от ' + new Date(bk.at).toLocaleString(I18N.locale()) + '.\n' +
+              'В ней занятий: ' + (bk.classes || []).length +
+              ', клиентов: ' + (bk.clients || []).length +
+              ', членов клуба: ' + (bk.clubMembers || []).length + '.\n\n' +
+              'Текущее состояние будет заменено этой копией и отправлено в облако.',
+            okText: 'Вернуть'
+          }).then(async function (yes) {
+            if (!yes) return;
+            State.clients = bk.clients || [];
+            State.classes = bk.classes || [];
+            State.clubMembers = bk.clubMembers || [];
+            State.clubGroups = bk.clubGroups || [];
+            State.incomes = bk.incomes || [];
+            if (bk.settings && typeof bk.settings === 'object') {
+              State.settings = Object.assign({}, CONFIG.DEFAULT_SETTINGS, bk.settings);
+            }
+            State.persist(); // touch: это теперь самая свежая правка
+            try { Cloud._initialSyncDone = true; await Cloud.push(); } catch (e) {}
+            try { Storage.saveKey(bkey, null); } catch (e) {}
+            UI.renderSchedule();
+            UI.renderClients();
+            UI.showToast('Данные возвращены и отправлены в облако');
           });
           break;
         }
