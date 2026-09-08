@@ -2780,8 +2780,8 @@
       </div>
       </div>
 
-      <!-- Версия сборки — всегда в самом низу страницы -->
-      <div id="buildVersion" class="build-version">сборка —</div>
+      <!-- Версия — всегда в самом низу страницы -->
+      <div id="buildVersion" class="build-version">версия —</div>
       </div>
     </div>
   </div>
@@ -3314,7 +3314,13 @@
   const CONFIG = {
     /* Номер сборки. Меняется при каждой правке — виден внизу Настроек.
        Если на экране старый номер, значит браузер отдаёт кэш, а не новый файл. */
-    BUILD: '2026-09-08 · 81',
+    /* Формат: 0.МАЖОР.МИНОР.
+       0      — канал «бета», пока идёт активная разработка.
+       МАЖОР  — число крупных нововведений (абонементы, клубы, английский,
+                подсчёт денег, оплата, …).
+       МИНОР  — мелкие доработки поверх текущего мажора.
+       В интерфейсе называется «версия», не «сборка». */
+    BUILD: '0.4.1 · бета',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -4414,7 +4420,7 @@
     [/^За (.+) здесь пусто$/, 'Nothing here for $1'],
     [/^(\d+) оплат$/, '$1 payments'],
     [/^(\d+) шт\.$/, '$1 sold'],
-    [/^сборка (.+)$/, 'build $1'],
+    [/^версия (.+)$/, 'version $1'],
     [/^Скидка (\d+) ₽$/, 'Discount $1 ₽'],
     [/^(.+) \(сейчас −(\d+) ₽\)$/, '$1 (currently −$2 ₽)'],
     [/^к оплате (.+)$/, 'due $1'],
@@ -4454,7 +4460,7 @@
     [/^(.+) накладывается на:$/, '$1 overlaps with:'],
     [/^• (.+)$/, '• $1'],
     /* Диагностика */
-    [/^Сборка: (.+)$/, 'Build: $1'],
+    [/^Версия: (.+)$/, 'Version: $1'],
     [/^Где открыто: (.+)$/, 'Opened in: $1'],
     [/^Мост контактов: (.+)$/, 'Contacts bridge: $1'],
     [/^Вход через Яндекс: (.+)$/, 'Yandex sign-in: $1'],
@@ -5828,7 +5834,7 @@
       var lines = [];
 
       var native = !!(window.__isNativeApp && window.__isNativeApp());
-      lines.push('Сборка: ' + CONFIG.BUILD);
+      lines.push('Версия: ' + CONFIG.BUILD);
       lines.push('Где открыто: ' + (native ? 'ПРИЛОЖЕНИЕ (APK)' : 'САЙТ в браузере'));
       lines.push('Мост контактов: ' +
         (window.AndroidContacts && typeof window.AndroidContacts.readContacts === 'function'
@@ -7452,7 +7458,7 @@
 
     /**
      * Сведения о среде. Ровно то, без чего невозможно понять причину:
-     * какая сборка открыта, сайт это или APK, каким способом вошли,
+     * какая версия открыта, сайт это или APK, каким способом вошли,
      * сколько записей. Ни имён, ни телефонов, ни сумм — письмо уходит
      * через чужой сервис, и личным данным там не место.
      */
@@ -7460,7 +7466,7 @@
       var lines = [];
       var push = function (k, v) { lines.push(k + ': ' + v); };
 
-      push('Сборка', CONFIG.BUILD);
+      push('Версия', CONFIG.BUILD);
       push('Где открыто', this.isNative() ? 'приложение (APK)' : 'сайт в браузере');
 
       if (window.AndroidBridge && typeof window.AndroidBridge.sourceMode === 'function') {
@@ -7546,7 +7552,7 @@
         _replyto: data.email,
         Тема: data.topic,
         Сообщение: data.message,
-        Сборка: CONFIG.BUILD
+        Версия: CONFIG.BUILD
       };
       if (data.diagnostics) payload['Сведения о приложении'] = data.diagnostics;
 
@@ -11329,15 +11335,15 @@
    * 8. BOOTSTRAP
    * ========================================================= */
   function bindEvents() {
-    /* —— Версия сборки: сразу видно, какой файл реально открыт —— */
+    /* —— Версия: сразу видно, какой файл реально открыт —— */
     try {
       var bv = document.getElementById('buildVersion');
-      if (bv) bv.textContent = 'сборка ' + CONFIG.BUILD;
-      console.log('[CoachCalendar] build ' + CONFIG.BUILD);
+      if (bv) bv.textContent = 'версия ' + CONFIG.BUILD;
+      console.log('[CoachCalendar] version ' + CONFIG.BUILD);
 
       /* —— Скрытая справка о геометрии экрана ——
 
-         Пять нажатий подряд по строке со сборкой. На телефоне консоли нет,
+         Пять нажатий подряд по строке с версией. На телефоне консоли нет,
          а разбирать вопросы вида «откуда снизу белая полоса» без чисел —
          гадание: непонятно, наша это область или системная панель жестов,
          которую рисует Chrome за пределами страницы. Здесь ровно те числа,
@@ -11373,7 +11379,7 @@
           var cs = getComputedStyle(document.documentElement);
           var scr = window.screen || {};
           var lines = [
-            'сборка ' + CONFIG.BUILD,
+            'версия ' + CONFIG.BUILD,
             'режим: ' + mode() + ' / ' + document.documentElement.getAttribute('data-launch'),
             'экран: ' + (scr.width || 0) + '×' + (scr.height || 0) + ', dpr ' + (window.devicePixelRatio || 0),
             'окно: ' + window.innerWidth + '×' + window.innerHeight,
