@@ -3387,7 +3387,7 @@
                 подсчёт денег, оплата, …).
        МИНОР  — мелкие доработки; ПОДНИМАТЬ на 1 при КАЖДОЙ новой выкладке.
        В интерфейсе называется «версия», не «сборка». */
-    BUILD: '0.4.8',
+    BUILD: '0.4.9',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -4675,6 +4675,7 @@
   const Storage = {
     available: false,
     memory: {},
+    lastSaveOk: true,
     init() {
       try {
         localStorage.setItem('__t', '1');
@@ -4682,28 +4683,68 @@
         this.available = true;
       } catch (e) { this.available = false; }
     },
+    /* Просим у браузера «долговременное» хранилище: без этого Android под
+       нехватку памяти может вычистить данные сайта. С ним — не тронет,
+       пока человек сам не сотрёт. */
+    requestPersistence() {
+      try {
+        if (navigator.storage && navigator.storage.persist) {
+          navigator.storage.persisted().then(function (already) {
+            if (!already) navigator.storage.persist().catch(function () {});
+          }).catch(function () {});
+        }
+      } catch (e) {}
+    },
     loadKey(key) {
       this.init();
       try {
         if (this.available) {
           const raw = localStorage.getItem(key);
-          return raw ? JSON.parse(raw) : null;
+          if (raw != null) return JSON.parse(raw);
+          // Пусто в localStorage, но могло остаться в RAM-запаснике
+          return this.memory[key] || null;
         }
         return this.memory[key] || null;
       } catch (e) {
         console.error('[Storage.loadKey]', e);
-        return null;
+        return this.memory[key] || null;
       }
     },
     saveKey(key, payload) {
-      try {
-        if (this.available) localStorage.setItem(key, JSON.stringify(payload));
-        else this.memory[key] = payload;
-      } catch (e) {
-        console.error('[Storage.saveKey]', e);
-        this.memory[key] = payload;
-        this.available = false;
+      var json;
+      try { json = JSON.stringify(payload); }
+      catch (e) { console.error('[Storage.saveKey] stringify', e); return false; }
+      this.init();
+      if (this.available) {
+        try {
+          localStorage.setItem(key, json);
+          this.memory[key] = payload;   // держим и в RAM — на случай внезапной эвикции в этой сессии
+          this.lastSaveOk = true;
+          return true;
+        } catch (e) {
+          console.error('[Storage.saveKey]', e);
+          /* Скорее всего кончилось место. Чистим необязательное
+             (снимки-подстраховки) и пробуем ещё раз — данные важнее копий. */
+          try {
+            for (var i = localStorage.length - 1; i >= 0; i--) {
+              var k = localStorage.key(i);
+              if (k && (/_undo$|_beforeSync$|_prev$/).test(k) && k !== key) localStorage.removeItem(k);
+            }
+            localStorage.setItem(key, json);
+            this.memory[key] = payload;
+            this.lastSaveOk = true;
+            return true;
+          } catch (e2) {
+            console.error('[Storage.saveKey] retry', e2);
+          }
+        }
       }
+      // На диск не легло — держим в памяти и громко предупреждаем
+      this.memory[key] = payload;
+      this.available = false;
+      this.lastSaveOk = false;
+      try { if (typeof UI !== 'undefined' && UI.showToast) UI.showToast('⚠ Не удалось сохранить на устройство — освободите память в телефоне'); } catch (e3) {}
+      return false;
     },
     load() { return this.loadKey(CONFIG.STORAGE_KEY); },
     save(payload) { this.saveKey(CONFIG.STORAGE_KEY, payload); },
@@ -5907,6 +5948,16 @@
         settings: State.settings
       };
     },
+    /** Есть ли на устройстве правки, которых сервер ещё НЕ подтвердил.
+        Работает и после перезапуска: settings.pushedAt лежит в localStorage
+        и хранит метку последней успешно отправленной версии. Пока ни одной
+        успешной выгрузки не было (pushedAt пуст) — судить не берёмся,
+        решают остальные проверки в syncOnLogin. */
+    hasUnsynced() {
+      var s = State.settings || {};
+      if (!s.updatedAt || !s.pushedAt) return false;
+      return s.updatedAt !== s.pushedAt;
+    },
     localCount() { return this.countRecords(this.localSnapshot()); },
 
     canSync() {
@@ -6021,6 +6072,7 @@
 
       this._syncing = true;
       try {
+        var sentAt = (State.settings && State.settings.updatedAt) || new Date().toISOString();
         var payload = {
           clients: State.clients,
           classes: State.classes,
@@ -6041,6 +6093,14 @@
           return false;
         }
         this._lastPush = Date.now();
+        /* Отмечаем, ЧТО именно подтвердил сервер. Метка переживает
+           перезапуск (лежит в settings в localStorage), поэтому даже если
+           приложение закрыли офлайн — на следующем входе видно, что
+           правки ещё не отправлены. */
+        try {
+          State.settings.pushedAt = sentAt;
+          State.persistSynced();
+        } catch (e) {}
         return true;
       } catch (e) {
         console.error('[Cloud.push]', e);
@@ -6080,10 +6140,9 @@
       if (remote.settings && typeof remote.settings === 'object') {
         State.settings = Object.assign({}, CONFIG.DEFAULT_SETTINGS, remote.settings);
       }
-      /* Сохраняем БЕЗ touch(): состояние сейчас идентично серверному, и
-         метку правки надо оставить серверную — иначе следующий вход
-         посчитает копию изменённой и затеет выгрузку (а при неверных
-         часах мог бы и перетереть). */
+      /* Копия теперь идентична серверной — помечаем как полностью
+         синхронизированную (updatedAt == pushedAt) и сохраняем БЕЗ touch(). */
+      try { State.settings.pushedAt = State.settings.updatedAt || null; } catch (e) {}
       State.persistSynced();
       try { Services.migrateAbonementDates(); } catch (e) {}
       try { Services.cleanupOrphanAbonementSales(); } catch (e) {}
@@ -6166,7 +6225,8 @@
         var remoteContentAt = remote.settings && remote.settings.updatedAt;
 
         var localHasUnpushedEdits =
-          localAt && (!remoteContentAt || String(localAt) > String(remoteContentAt));
+          this.hasUnsynced() ||                     // метка pushedAt (переживает перезапуск)
+          (localAt && (!remoteContentAt || String(localAt) > String(remoteContentAt)));
 
         var takeRemote =
           !localHasUnpushedEdits &&                 // на устройстве нет несинхронизированных правок
@@ -12023,9 +12083,19 @@
       else if (Cloud._pushDirty) { try { Cloud._flushPush(); } catch (e) {} }
     });
     window.addEventListener('pagehide', saveOnLeave);
-    /* Сеть вернулась — досылаем то, что не ушло. */
+    /* Сеть вернулась. Если приложение стартовало офлайн (первая синхра не
+       прошла) — проводим её сейчас; иначе просто досылаем несохранённое. */
     window.addEventListener('online', function () {
-      if (Cloud._pushDirty) { try { Cloud._flushPush(); } catch (e) {} }
+      try {
+        if (!Cloud._initialSyncDone && State.currentUser && State.currentUser.token) {
+          Cloud.syncOnLogin().then(function () {
+            if (Cloud._pushDirty) Cloud._flushPush();
+            try { renderScreen(); } catch (e) {}
+          }).catch(function () {});
+        } else if (Cloud._pushDirty) {
+          Cloud._flushPush();
+        }
+      } catch (e) {}
     });
 
     /* —— Ничего не падает молча ——
@@ -12545,7 +12615,12 @@
   async function enterApp(user) {
     State.currentUser = user;
     try { Sub.reset(); } catch (e) {}
+    try { Storage.requestPersistence(); } catch (e) {}
     State.hydrate(Storage.loadKey(State.dataKey()));
+    /* Правки прошлой сессии могли не уйти на сервер (был офлайн, закрыли
+       раньше времени). settings.pushedAt это переживает — поднимаем флаг,
+       чтобы синхронизация/событие «сеть появилась» их досдали. */
+    Cloud._pushDirty = Cloud.hasUnsynced();
     if (!State.settings.profileName) {
       State.settings.profileName = user.name || '';
     }
@@ -12584,6 +12659,10 @@
         UI.showToast('Аккаунт без облака: данные только на этом устройстве');
       }, 600);
     }
+
+    /* Остались несинхронизированные правки (сеть отвалилась во время
+       syncOnLogin, правка во время запроса и т.п.) — досылаем. */
+    try { if (Cloud._pushDirty && Cloud._initialSyncDone) Cloud._flushPush(); } catch (e) {}
 
     /* Миграции — строго после синхронизации: они пишут в State, а значит
        двигают updatedAt. Прогони их раньше — Cloud.syncOnLogin решил бы,
