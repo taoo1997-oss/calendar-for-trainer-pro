@@ -1697,22 +1697,22 @@
        перехода/рывка. */
     .splash-bg {
       position: absolute; inset: 0; background: #fcfbff;
-      transition: opacity 0.45s ease;
+      transition: opacity 0.6s ease;
     }
     .splash-logo {
       position: relative; z-index: 1;
       display: flex; flex-direction: column; align-items: center; gap: 20px;
     }
     .splash-mark {
-      width: 76px; height: 76px; display: block;
+      width: 84px; height: 84px; display: block;
       transform-origin: center center;
-      animation: splashIn 0.6s ease both;
+      animation: splashIn 0.7s ease both;
     }
     .splash-name {
       font-family: var(--font);
       color: var(--primary); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.01em;
       transition: opacity 0.28s ease, transform 0.28s ease;
-      animation: splashIn 0.6s ease 0.12s both;
+      animation: splashIn 0.7s ease 0.5s both;
     }
     .splash-name b { color: #1b1c1f; font-weight: 700; }
     .splash-mark rect, .splash-mark path { transition: stroke 0.3s ease; }
@@ -1728,15 +1728,15 @@
       from { opacity: 0; transform: translateY(8px) scale(0.96); }
       to { opacity: 1; transform: none; }
     }
-    /* draw-on для знака на заставке */
+    /* draw-on для знака на заставке — спокойный, чуть длиннее */
     .splash-mark [data-draw] {
       stroke-dasharray: 1; stroke-dashoffset: 1;
-      animation: ccDraw 0.85s ease forwards;
+      animation: ccDraw 1.05s ease forwards;
     }
-    .splash-mark [data-draw="2"] { animation-delay: 0.10s; }
-    .splash-mark [data-draw="3"] { animation-delay: 0.17s; }
-    .splash-mark [data-draw="4"] { animation-delay: 0.27s; }
-    .splash-mark [data-draw="5"] { animation-delay: 0.37s; }
+    .splash-mark [data-draw="2"] { animation-delay: 0.16s; }
+    .splash-mark [data-draw="3"] { animation-delay: 0.32s; }
+    .splash-mark [data-draw="4"] { animation-delay: 0.48s; }
+    .splash-mark [data-draw="5"] { animation-delay: 0.64s; }
     @keyframes ccDraw { to { stroke-dashoffset: 0; } }
     /* Рамка календаря — единственный замкнутый контур в знаке. Пока штрих
        пунктирный, его начало и конец сходятся в одной точке встык, без
@@ -1745,7 +1745,7 @@
        пунктир снимаем совсем — нулевой шаблон по спецификации SVG рисуется
        сплошной линией, и контур смыкается начисто. */
     .splash-mark [data-draw="1"] {
-      animation: ccDraw 0.85s ease forwards, ccSolid 1ms linear 0.86s forwards;
+      animation: ccDraw 1.05s ease forwards, ccSolid 1ms linear 1.06s forwards;
     }
     @keyframes ccSolid { to { stroke-dasharray: 0 0; } }
     @media (prefers-reduced-motion: reduce) {
@@ -1793,9 +1793,12 @@
        #FCFBFF. Тёмная — одно плавное растворение в конце (цвет системной
        заставки один на все темы, тёмную под него не подстроить).
 
-       Логотип с подписью и отрисовкой линий остаётся для вкладки браузера:
-       там системной заставки нет, и наша — единственная. */
-    [data-launch="installed"] .splash-logo { display: none; }
+       Анимированный знак с подписью и отрисовкой линий показываем ВЕЗДЕ,
+       и в установленном приложении тоже: раньше его прятали, боясь «двух
+       заставок подряд», но теперь системная заставка и наша — один цвет
+       #FCFBFF, значок в том же месте по центру, и переход читается как
+       «значок оживает», а не как второй экран. В конце знак плавно
+       уезжает на своё место в шапке (позиция ①). */
     [data-launch="installed"] .splash-bg { background: #fcfbff; }
 
     .theme-options { display: flex; gap: 6px; }
@@ -3387,7 +3390,7 @@
                 подсчёт денег, оплата, …).
        МИНОР  — мелкие доработки; ПОДНИМАТЬ на 1 при КАЖДОЙ новой выкладке.
        В интерфейсе называется «версия», не «сборка». */
-    BUILD: '0.4.9',
+    BUILD: '0.5.0',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -12234,13 +12237,11 @@
     (function hideSplash() {
       var sp = document.getElementById('splash');
       if (!sp) return;
-      /* В установленном приложении наша заставка — тот же фон, что у
-         системной, без знака. Ждать секунду тут незачем, но и уходить
-         мгновенно нельзя: Android ещё доигрывает свою анимацию открытия
-         окна (по записи запуска — около 270 мс), и приложение, проявившееся
-         посреди неё, читается как рывок. Держим ровно до её конца. */
+      /* Держим заставку, пока не дорисуется знак: отрисовка линий занимает
+         ~1.2с (0.64с задержка последней + 1.05с сама). Раньше в
+         установленном режиме уходили за 300мс — знак даже не появлялся. */
       var installed = document.documentElement.getAttribute('data-launch') === 'installed';
-      var MIN_MS = installed ? 300 : 900, MAX_MS = 4000;
+      var MIN_MS = 1500, MAX_MS = 4500;
       var t0 = Date.now();
       var restoreMark = null; // знак-мишень, который прячем на время полёта
 
@@ -12272,9 +12273,9 @@
         }
 
         var mr = mark && mark.getBoundingClientRect();
-        /* Полёт знака на своё место — только когда знак на заставке вообще
-           был. В установленном приложении его нет (см. data-launch). */
-        var canFly = !reduce && !installed && mark && mr && mr.width > 4 && homeMark;
+        /* Полёт знака на своё место — теперь и в установленном приложении:
+           знак на заставке есть везде. */
+        var canFly = !reduce && mark && mr && mr.width > 4 && homeMark;
 
         if (canFly) {
           var dx = (hr.left + hr.width / 2) - (mr.left + mr.width / 2);
@@ -12290,19 +12291,19 @@
           if (sn) { sn.style.transition = 'opacity 0.18s ease'; sn.style.opacity = '0'; }
 
           requestAnimationFrame(function () {
-            mark.style.transition = 'transform 0.6s cubic-bezier(0.35, 0, 0.15, 1)';
+            mark.style.transition = 'transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)';
             requestAnimationFrame(function () {
               mark.style.transform =
                 'translate(' + dx + 'px,' + dy + 'px) scale(' + scale + ')';
             });
           });
-          setTimeout(function () { sp.classList.add('hide'); }, 180);
-          setTimeout(remove, 780);
+          setTimeout(function () { sp.classList.add('hide'); }, 240);
+          setTimeout(remove, 1050);
           // страховка: если remove не вызовется, знак всё равно вернётся
-          setTimeout(unhideHome, 1600);
+          setTimeout(unhideHome, 1900);
         } else {
           sp.classList.add('hide');
-          setTimeout(remove, 560);
+          setTimeout(remove, 720);
         }
       }
 
