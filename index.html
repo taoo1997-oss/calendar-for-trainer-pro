@@ -57,7 +57,7 @@
   -->
   <script>
     (function preboot() {
-      var BG = { light: '#fdf2f4', dark: '#1c1917', black: '#000000' };
+      var BG = { light: '#eef2f8', dark: '#1c1917', black: '#000000' };
       /* 'auto' — не тема, а «спросить телефон»: значение по умолчанию и
          для новых установок, и пока человек сам не выбрал в настройках.
          В data-theme и в BG уходит уже разрешённый light/dark. */
@@ -194,12 +194,19 @@
       --primary-light: #ffe4e6;
       --success: #10b981;
       --danger: #ef4444;
-      --bg: #fdf2f4;
+      /* Палитра «Небо»: холодный сине-серый холст, белые карточки, реальная
+         тень — карточки и кнопки заметно приподняты над фоном. Акцент
+         (--primary) выбирается отдельно в «Цвет приложения». */
+      --bg: #eef2f8;
       --card: #ffffff;
-      --text: #1c1917;
-      --text-muted: #a8a29e;
-      --border: #f5e6e8;
-      --shadow: 0 1px 2px rgba(28,25,23,0.04);
+      --text: #171b22;
+      --text-muted: #6f7580;
+      --border: #dbe3f0;
+      --shadow: 0 1px 2px rgba(23,40,86,0.06), 0 4px 14px rgba(23,40,86,0.05);
+      /* Дорожка сегмент-переключателей (вкладки настроек, тумблер входа):
+         чуть темнее холста, чтобы белая активная плитка на ней читалась.
+         В тёмной/чёрной теме = прежний --bg, поведение не меняется. */
+      --track: #e2e8f4;
       --radius: 16px;
       --nav-h: 64px;
       /* Безопасные зоны. В Android WebView env(safe-area-inset-*) для статус-бара
@@ -233,7 +240,8 @@
       --text-muted: #a8a29e;
       --border: #44403c;
       --primary-light: #4c0519;
-      --shadow: 0 1px 2px rgba(0,0,0,0.25);
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 14px rgba(0,0,0,0.28);
+      --track: #14110f;
     }
 
     /* Чёрная тема: глубокий чёрный фон, белый текст, минимум украшений.
@@ -246,6 +254,7 @@
       --text-muted: #8b8b8b;
       --border: #232323;
       --shadow: none;
+      --track: #000000;
     }
     [data-theme="black"] .card,
     [data-theme="black"] .money-card,
@@ -442,40 +451,29 @@
     .nav-item.active { color: var(--primary); }
     .nav-icon { font-size: 1.25rem; line-height: 1; }
 
-    /* —— Стык с системной полосой жестов ——
+    /* —— Стык с системной полосой жестов («подбородок») ——
 
        Под приложением остаётся полоса ~18 CSS-пикселей, которую рисует
-       система, и дотянуться до неё со страницы нельзя: окно заканчивается
-       выше неё, env(safe-area-inset-bottom) там 0 (замер на устройстве:
-       окно 387×805 внутри экрана 388×862; Chrome обновлён — не изменилось).
-       Сквозной режим «под панелями» тут включает Chrome, не сайт.
+       система; дотянуться до неё со страницы нельзя (окно заканчивается
+       выше, env(safe-area-inset-bottom) = 0, Chrome обновлён — не помогло).
 
-       Замер сборки 80 показал главное: живой фон страницы в тёмной теме
-       rgb(28,25,23), а подбородок при этом светлый. Значит Chrome берёт
-       его цвет НЕ со страницы (иначе color-scheme/фон бы работали), а из
-       манифеста — background_color = #fdf2f4. Значение одно, вшивается при
-       установке ярлыка, на лету не меняется.
-
-       Отсюда стратегия:
-       • Светлая тема — панель делаем ровно #fdf2f4 (= background_color),
-         панель и подбородок сливаются, стыка нет. От контента панель
-         отделяем тенью: фон контента такой же.
-       • Тёмная/чёрная — background_color под них не подстроить, поэтому
-         подбородок останется светлым на светлом телефоне. На тёмном
-         телефоне системная полоса сама уходит в тёмное; опускаем панель
-         до той же глубины, чтобы ступеньки не было.
-       • Тема по умолчанию — «Авто» (следует телефону), поэтому тёмное
-         приложение почти всегда встречается с тёмным телефоном. */
+       Цвет подбородка задаёт Chrome по схеме color-scheme, а не по нашему
+       CSS: при светлой схеме он БЕЛЫЙ, при тёмной — почти чёрный
+       (замер: rgb(18,19,24)). Поэтому единственный рабочий приём —
+       подогнать нижнюю панель ровно под этот цвет:
+       • светлая тема → панель #ffffff, шва снизу нет;
+       • тёмная/чёрная → панель #121318 (= подбородок при color-scheme:dark).
+       От контента панель отделяем рамкой сверху и тенью.
+       Тема по умолчанию — «Авто», так что тёмное приложение почти всегда
+       встречает тёмную системную схему и подбородок совпадает. */
     [data-theme="light"] .bottom-nav {
-      background: #fdf2f4;
-      border-top-color: #f0dde1;
-      box-shadow: 0 -1px 10px rgba(28, 25, 23, 0.05);
+      background: #ffffff;
+      border-top-color: var(--border);
+      box-shadow: 0 -1px 14px rgba(23, 40, 86, 0.07);
     }
-    @media (prefers-color-scheme: dark) {
-      [data-theme="dark"] .bottom-nav {
-        background: #141212;
-        border-top-color: #2c2725;
-      }
+    [data-theme="dark"] .bottom-nav {
+      background: #121318;
+      border-top-color: #262a33;
     }
 
     .content {
@@ -547,7 +545,7 @@
     /* Тумблер «Телефон / Email» на входе */
     .seg-toggle {
       display: flex; gap: 4px; padding: 4px;
-      background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+      background: var(--track); border: 1px solid var(--border); border-radius: 12px;
     }
     .seg-btn {
       /* min-width: 0 обязателен: без него flex-элемент не сжимается уже
@@ -1742,7 +1740,7 @@
     .theme-option {
       flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px;
       padding: 12px 4px; border: 1.5px solid var(--border); border-radius: 14px;
-      background: var(--card); color: var(--text-muted);
+      background: var(--card); color: var(--text-muted); box-shadow: var(--shadow);
       font-family: inherit; font-size: 0.72rem; font-weight: 600; cursor: pointer;
     }
     .theme-option.active { border-color: var(--primary); color: var(--primary); }
@@ -1751,7 +1749,7 @@
     }
     /* «Авто» — половина светлой, половина тёмной: тема идёт от телефона */
     .theme-swatch.auto { background: linear-gradient(135deg, #ffffff 50%, #1c1917 50%); }
-    .theme-swatch.light { background: linear-gradient(135deg, #ffffff 50%, #fdf2f4 50%); }
+    .theme-swatch.light { background: linear-gradient(135deg, #ffffff 50%, #eef2f8 50%); }
     .theme-swatch.dark { background: linear-gradient(135deg, #292524 50%, #1c1917 50%); }
     .theme-swatch.black { background: linear-gradient(135deg, #141414 50%, #000000 50%); }
 
@@ -8189,8 +8187,8 @@
       /* Подложка самого окна приложения живёт в нативном коде и по умолчанию
          светлая — она и просвечивала белым по краям экрана. Передаём ей
          текущий цвет фона. */
-      var bgByTheme = { light: '#fdf2f4', dark: '#1c1917', black: '#000000' };
-      var bg = bgByTheme[themeName] || '#fdf2f4';
+      var bgByTheme = { light: '#eef2f8', dark: '#1c1917', black: '#000000' };
+      var bg = bgByTheme[themeName] || '#eef2f8';
       document.documentElement.style.backgroundColor = bg;
       /* color-scheme preboot ставит инлайном — иначе первый кадр приходит в
          системной схеме, а не в нашей. Инлайн перебивает правило
