@@ -2238,6 +2238,32 @@
       cursor: pointer; font-size: inherit; font-family: inherit; padding: 0;
     }
     .auth-hint { margin-top: 12px; font-size: 0.7rem; color: var(--text-muted); text-align: center; line-height: 1.4; }
+
+    /* Согласие с правовыми документами на экране регистрации */
+    .auth-consent { margin: 4px 0 14px; }
+    .auth-consent > label {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 0.78rem; line-height: 1.4; color: var(--text);
+      cursor: pointer; margin-bottom: 8px;
+    }
+    .auth-consent > label:last-of-type { margin-bottom: 0; }
+    .auth-consent input[type="checkbox"] {
+      width: 18px; height: 18px; margin: 1px 0 0; flex-shrink: 0;
+      accent-color: var(--primary);
+    }
+    .consent-links {
+      margin: 8px 0 0; font-size: 0.72rem; line-height: 1.5;
+      color: var(--text-muted); text-align: left;
+    }
+    .consent-links a { color: var(--primary); }
+    .consent-note {
+      margin: 10px 0 0; font-size: 0.68rem; line-height: 1.4;
+      color: var(--text-muted); text-align: center;
+    }
+    .legal-links { display: flex; flex-direction: column; gap: 8px; }
+    .legal-links a { color: var(--primary); font-size: 0.85rem; text-decoration: none; }
+    .legal-links a:hover { text-decoration: underline; }
+
     #appShell.hidden { display: none !important; }
     /* «+» и нижняя навигация лежат вне #appShell. Пока открыт экран входа,
        они не нужны — раньше их прятал лишь непрозрачный фон .auth-gate,
@@ -2590,11 +2616,27 @@
         </div>
         <div class="form-group"><label>Пароль *</label><input type="password" id="regPass" placeholder="Минимум 8 символов" autocomplete="new-password">
           <p class="text-sm text-muted" style="margin-top:6px;font-size:0.7rem;">Телефон и почта — разные аккаунты. Войти можно тем способом, которым регистрировались.</p></div>
+        <div class="auth-consent">
+          <label>
+            <input type="checkbox" id="regAcceptTerms">
+            <span>Я принимаю «Пользовательское соглашение» и «Договор-оферту»</span>
+          </label>
+          <label>
+            <input type="checkbox" id="regAcceptPrivacy">
+            <span>Я даю согласие на обработку персональных данных</span>
+          </label>
+          <p class="consent-links" data-no-i18n>Документы:
+            <a href="legal/terms.html" target="_blank" rel="noopener">Пользовательское соглашение</a> ·
+            <a href="legal/offer.html" target="_blank" rel="noopener">Договор-оферта</a> ·
+            <a href="legal/privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a>
+          </p>
+        </div>
         <button type="button" class="btn btn-primary btn-block" data-action="register-local">Зарегистрироваться</button>
         <div class="auth-divider"><span>или</span></div>
         <button type="button" class="btn btn-yandex btn-block" data-action="yandex-login">
           <span class="yandex-icon">Я</span> Войти через Яндекс ID
         </button>
+        <p class="consent-note">Продолжая через Яндекс ID, вы принимаете «Пользовательское соглашение», «Договор-оферту» и «Политику конфиденциальности».</p>
         <p class="auth-switch">Уже есть аккаунт? <button type="button" class="link-btn" data-action="show-login">Войти</button></p>
       </div>
 
@@ -2620,6 +2662,11 @@
         <button type="button" class="btn btn-yandex btn-block" data-action="yandex-login">
           <span class="yandex-icon">Я</span> Войти через Яндекс ID
         </button>
+        <p class="consent-links" data-no-i18n>
+          <a href="legal/terms.html" target="_blank" rel="noopener">Пользовательское соглашение</a> ·
+          <a href="legal/offer.html" target="_blank" rel="noopener">Договор-оферта</a> ·
+          <a href="legal/privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a>
+        </p>
         <p class="auth-switch">Нет аккаунта? <button type="button" class="link-btn" data-action="show-register">Регистрация</button></p>
       </div>
 
@@ -2772,6 +2819,15 @@
         <h3>Обратная связь</h3>
         <button type="button" class="btn btn-secondary btn-block btn-sm" data-action="feedback-open">✉️ Написать разработчику</button>
         <p class="text-sm text-muted" style="margin-top:8px;font-size:0.72rem;">Что-то не работает, потерялись данные или не хватает возможности — напишите. Ответ придёт на почту, которую вы укажете.</p>
+      </div>
+      <div class="settings-block">
+        <h3>Правовые документы</h3>
+        <div class="legal-links" data-no-i18n>
+          <a href="legal/terms.html" target="_blank" rel="noopener">Пользовательское соглашение</a>
+          <a href="legal/offer.html" target="_blank" rel="noopener">Договор-оферта на подписку</a>
+          <a href="legal/privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a>
+        </div>
+        <p class="text-sm text-muted" style="margin-top:8px;font-size:0.72rem;">Открываются в браузере. Вы приняли их при регистрации.</p>
       </div>
       </div>
 
@@ -3390,7 +3446,7 @@
                 подсчёт денег, оплата, …).
        МИНОР  — мелкие доработки; ПОДНИМАТЬ на 1 при КАЖДОЙ новой выкладке.
        В интерфейсе называется «версия», не «сборка». */
-    BUILD: '0.4.10',
+    BUILD: '0.4.11',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -3968,6 +4024,20 @@
     'Вы вышли': 'You are signed out',
     'Аккаунт без облака: данные только на этом устройстве':
       'Account without cloud sync — your data stays on this device only',
+
+    /* Правовые документы и согласие при регистрации */
+    'Я принимаю «Пользовательское соглашение» и «Договор-оферту»':
+      'I accept the Terms of Use and the Service Offer',
+    'Я даю согласие на обработку персональных данных':
+      'I consent to the processing of my personal data',
+    'Продолжая через Яндекс ID, вы принимаете «Пользовательское соглашение», «Договор-оферту» и «Политику конфиденциальности».':
+      'By continuing with Yandex ID you accept the Terms of Use, the Service Offer and the Privacy Policy.',
+    'Отметьте оба пункта согласия, чтобы продолжить':
+      'Check both consent boxes to continue',
+    'Правовые документы': 'Legal documents',
+    'Договор-оферта на подписку': 'Subscription Service Offer',
+    'Открываются в браузере. Вы приняли их при регистрации.':
+      'They open in your browser. You accepted them when you registered.',
 
     /* Установка на экран «Домой» */
     'Установка на экран «Домой»': 'Add to Home Screen',
@@ -5770,6 +5840,36 @@
       var db = this.loadUsers();
       if (!db.sessionId) return null;
       return db.users.find(function (u) { return u.id === db.sessionId; }) || null;
+    },
+    /**
+     * Зафиксировать факт принятия правовых документов при регистрации.
+     * Пишем и в запись аккаунта, и отдельным ключом — как доказательство
+     * того, что чекбоксы были отмечены, с датой и версией приложения.
+     */
+    recordConsent(user) {
+      if (!user) return;
+      var rec = {
+        at: new Date().toISOString(),
+        build: CONFIG.BUILD,
+        login: user.loginKey || user.login || null,
+        docs: ['legal/terms.html', 'legal/offer.html', 'legal/privacy.html']
+      };
+      try { localStorage.setItem('cc_consent_v1', JSON.stringify(rec)); } catch (e) {}
+      try {
+        var db = this.loadUsers();
+        var u = (db.users || []).find(function (x) { return x.id === user.id; });
+        if (u && !u.consent) { u.consent = rec; this.saveUsers(db); }
+      } catch (e) {}
+    },
+    /** То же, но не трогает уже сохранённое согласие (для входа через Яндекс ID). */
+    recordConsentIfNew(user) {
+      if (!user) return;
+      try {
+        var db = this.loadUsers();
+        var u = (db.users || []).find(function (x) { return x.id === user.id; });
+        if (u && u.consent) return;
+      } catch (e) {}
+      this.recordConsent(user);
     },
     updateProfile(partial) {
       var db = this.loadUsers();
@@ -10267,6 +10367,14 @@
           setAuthMode(el.dataset.panel, el.dataset.mode);
           break;
         case 'register-local': {
+          var cbTerms = document.getElementById('regAcceptTerms');
+          var cbPrivacy = document.getElementById('regAcceptPrivacy');
+          if (!cbTerms || !cbTerms.checked || !cbPrivacy || !cbPrivacy.checked) {
+            UI.showToast('Отметьте оба пункта согласия, чтобы продолжить');
+            var miss = (cbTerms && !cbTerms.checked) ? cbTerms : cbPrivacy;
+            if (miss && miss.focus) miss.focus();
+            break;
+          }
           (async function () {
             var loginRaw = authLoginValue('reg');
             var r = await Auth.registerLocal(
@@ -10285,6 +10393,7 @@
               }
               return;
             }
+            Auth.recordConsent(r.user);
             await enterApp(r.user);
             UI.showToast('Аккаунт создан: ' + Auth.displayLogin(r.user.login));
           })();
@@ -12760,6 +12869,7 @@
     } catch (e) { console.warn('OAuth deep link listener', e); }
     var yaUser = await Auth.handleYandexRedirect();
     if (yaUser) {
+      Auth.recordConsentIfNew(yaUser);
       await enterApp(yaUser);
       UI.showToast('Вход через Яндекс выполнен');
       if (!Storage.available) setTimeout(function () { UI.showToast('Данные не сохраняются (предпросмотр)'); }, 800);
@@ -12816,6 +12926,7 @@
         (expiresIn ? '&expires_in=' + encodeURIComponent(expiresIn) : '');
       var user = await Auth.handleYandexRedirect();
       if (user) {
+        Auth.recordConsentIfNew(user);
         await enterApp(user);
         UI.showToast('Вход через Яндекс выполнен');
       }
