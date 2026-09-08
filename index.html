@@ -248,18 +248,20 @@
       --track: #121318;
     }
 
-    /* Чёрная тема — ОДИН цвет на всё: чистый #000. Карточки/дорожка/панель
-       не отличаются от фона цветом, только рамкой #232323. Системный
-       подбородок при этой теме тоже почти #000 — снизу шва нет. */
+    /* Чёрная тема: холст — чистый #000 (этим отличается от тёмной), а все
+       «служебные» поверхности — карточки, дорожка вкладок, шапка, нижнее
+       меню — #121318. Это ровно цвет системного подбородка при тёмной
+       схеме (он одинаков для тёмной и чёрной тем), поэтому снизу шва нет
+       и панель совпадает с подбородком, как в тёмной теме. */
     [data-theme="black"] {
       color-scheme: dark;
       --bg: #000000;
-      --card: #000000;
+      --card: #121318;
       --text: #ffffff;
       --text-muted: #8b8b8b;
-      --border: #232323;
+      --border: #23242b;
       --shadow: none;
-      --track: #000000;
+      --track: #121318;
     }
     [data-theme="black"] .card,
     [data-theme="black"] .money-card,
@@ -268,14 +270,17 @@
     [data-theme="black"] .income-row,
     [data-theme="black"] .club-month-bar,
     [data-theme="black"] .modal { box-shadow: none; }
-    [data-theme="black"] .header { background: #000; border-bottom-color: #1a1a1a; }
-    [data-theme="black"] .bottom-nav { background: #000; border-top-color: #1a1a1a; }
+    [data-theme="black"] .header { background: #121318; border-bottom-color: var(--border); }
+    [data-theme="black"] .bottom-nav { background: #121318; border-top-color: var(--border); }
+    /* Полоса вкладок настроек по умолчанию в цвет холста (var(--bg)); в
+       чёрной теме поднимаем её до служебного #121318 — на неё показывали. */
+    [data-theme="black"] .settings-tabs-bar { background: #121318; }
     [data-theme="black"] .time-slot { border-color: #1a1a1a; }
     [data-theme="black"] .time-class { background: #141414; border-color: #262626; }
     [data-theme="black"] .money-hero { background: #0e0e0e; }
     [data-theme="black"] input,
     [data-theme="black"] textarea,
-    [data-theme="black"] select { background: #0e0e0e; border-color: #262626; color: #fff; }
+    [data-theme="black"] select { background: #0c0d11; border-color: #2a2b33; color: #fff; }
 
     /* —— Общие правки для обеих тёмных тем —— */
 
@@ -581,7 +586,7 @@
     /* В тёмных темах фон = карточка = холст, поэтому активную плитку
        приподнимаем отдельным цветом чуть светлее фона. */
     [data-theme="dark"] .seg-btn.active { background: #262933; box-shadow: none; }
-    [data-theme="black"] .seg-btn.active { background: #1b1b1b; box-shadow: none; }
+    [data-theme="black"] .seg-btn.active { background: #24262f; box-shadow: none; }
     .seg-btn:focus { outline: none; }
     .seg-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
@@ -3336,7 +3341,7 @@
                 подсчёт денег, оплата, …).
        МИНОР  — мелкие доработки; ПОДНИМАТЬ на 1 при КАЖДОЙ новой выкладке.
        В интерфейсе называется «версия», не «сборка». */
-    BUILD: '0.4.2',
+    BUILD: '0.4.3',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
