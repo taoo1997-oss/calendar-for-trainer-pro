@@ -57,7 +57,7 @@
   -->
   <script>
     (function preboot() {
-      var BG = { light: '#eef2f8', dark: '#1c1917', black: '#000000' };
+      var BG = { light: '#f4f5f7', dark: '#1c1917', black: '#000000' };
       /* 'auto' — не тема, а «спросить телефон»: значение по умолчанию и
          для новых установок, и пока человек сам не выбрал в настройках.
          В data-theme и в BG уходит уже разрешённый light/dark. */
@@ -194,19 +194,19 @@
       --primary-light: #ffe4e6;
       --success: #10b981;
       --danger: #ef4444;
-      /* Палитра «Небо»: холодный сине-серый холст, белые карточки, реальная
-         тень — карточки и кнопки заметно приподняты над фоном. Акцент
-         (--primary) выбирается отдельно в «Цвет приложения». */
-      --bg: #eef2f8;
+      /* Палитра «Снег»: почти белый нейтральный холст, белые карточки,
+         реальная тень — карточки и кнопки заметно приподняты над фоном.
+         Акцент (--primary) выбирается отдельно в «Цвет приложения». */
+      --bg: #f4f5f7;
       --card: #ffffff;
-      --text: #171b22;
-      --text-muted: #6f7580;
-      --border: #dbe3f0;
-      --shadow: 0 1px 2px rgba(23,40,86,0.06), 0 4px 14px rgba(23,40,86,0.05);
+      --text: #1b1c1f;
+      --text-muted: #6c7075;
+      --border: #e6e7ea;
+      --shadow: 0 1px 2px rgba(20,22,28,0.07), 0 4px 14px rgba(20,22,28,0.06);
       /* Дорожка сегмент-переключателей (вкладки настроек, тумблер входа):
          чуть темнее холста, чтобы белая активная плитка на ней читалась.
          В тёмной/чёрной теме = прежний --bg, поведение не меняется. */
-      --track: #e2e8f4;
+      --track: #e9eaee;
       --radius: 16px;
       --nav-h: 64px;
       /* Безопасные зоны. В Android WebView env(safe-area-inset-*) для статус-бара
@@ -457,19 +457,19 @@
        система; дотянуться до неё со страницы нельзя (окно заканчивается
        выше, env(safe-area-inset-bottom) = 0, Chrome обновлён — не помогло).
 
-       Цвет подбородка задаёт Chrome по схеме color-scheme, а не по нашему
-       CSS: при светлой схеме он БЕЛЫЙ, при тёмной — почти чёрный
-       (замер: rgb(18,19,24)). Поэтому единственный рабочий приём —
-       подогнать нижнюю панель ровно под этот цвет:
-       • светлая тема → панель #ffffff, шва снизу нет;
-       • тёмная/чёрная → панель #121318 (= подбородок при color-scheme:dark).
-       От контента панель отделяем рамкой сверху и тенью.
-       Тема по умолчанию — «Авто», так что тёмное приложение почти всегда
-       встречает тёмную системную схему и подбородок совпадает. */
+       Цвет подбородка задаёт Chrome, не наш CSS. Значения ниже — по замерам
+       скрытой справки на устройстве пользователя:
+       • светлая системная схема → rgb(250,247,254) = #FAF7FE;
+       • тёмная системная схема → rgb(18,19,24) = #121318.
+       Панель окрашиваем ровно в эти цвета — тогда шва снизу нет.
+       ⚠️ Если на другом телефоне/версии Chrome подбородок другой — снять
+       новый замер и поправить здесь; со страницы этот участок недостижим.
+       От контента панель отделяем рамкой сверху и тенью. Тема по умолчанию —
+       «Авто», тёмное приложение почти всегда встречает тёмную схему. */
     [data-theme="light"] .bottom-nav {
-      background: #ffffff;
+      background: #faf7fe;
       border-top-color: var(--border);
-      box-shadow: 0 -1px 14px rgba(23, 40, 86, 0.07);
+      box-shadow: 0 -1px 14px rgba(20, 22, 28, 0.07);
     }
     [data-theme="dark"] .bottom-nav {
       background: #121318;
@@ -568,7 +568,10 @@
       padding-left: 4px; padding-right: 4px;
       font-size: clamp(0.78rem, calc(6px + 1.53vw), 0.85rem);
     }
-    .seg-btn.active { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
+    /* Активный раздел — акцентным цветом (как на макете): белая плитка,
+       текст --primary, реальная тень. Раньше текст был серый (var(--text))
+       и активная вкладка почти не отличалась от прочих. */
+    .seg-btn.active { background: var(--card); color: var(--primary); font-weight: 700; box-shadow: var(--shadow); }
     .seg-btn:focus { outline: none; }
     .seg-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
@@ -1749,7 +1752,7 @@
     }
     /* «Авто» — половина светлой, половина тёмной: тема идёт от телефона */
     .theme-swatch.auto { background: linear-gradient(135deg, #ffffff 50%, #1c1917 50%); }
-    .theme-swatch.light { background: linear-gradient(135deg, #ffffff 50%, #eef2f8 50%); }
+    .theme-swatch.light { background: linear-gradient(135deg, #ffffff 50%, #f4f5f7 50%); }
     .theme-swatch.dark { background: linear-gradient(135deg, #292524 50%, #1c1917 50%); }
     .theme-swatch.black { background: linear-gradient(135deg, #141414 50%, #000000 50%); }
 
@@ -8187,8 +8190,8 @@
       /* Подложка самого окна приложения живёт в нативном коде и по умолчанию
          светлая — она и просвечивала белым по краям экрана. Передаём ей
          текущий цвет фона. */
-      var bgByTheme = { light: '#eef2f8', dark: '#1c1917', black: '#000000' };
-      var bg = bgByTheme[themeName] || '#eef2f8';
+      var bgByTheme = { light: '#f4f5f7', dark: '#1c1917', black: '#000000' };
+      var bg = bgByTheme[themeName] || '#f4f5f7';
       document.documentElement.style.backgroundColor = bg;
       /* color-scheme preboot ставит инлайном — иначе первый кадр приходит в
          системной схеме, а не в нашей. Инлайн перебивает правило
