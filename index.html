@@ -57,7 +57,7 @@
   -->
   <script>
     (function preboot() {
-      var BG = { light: '#faf7fe', dark: '#1c1917', black: '#000000' };
+      var BG = { light: '#fcfbff', dark: '#1c1917', black: '#000000' };
       /* 'auto' — не тема, а «спросить телефон»: значение по умолчанию и
          для новых установок, и пока человек сам не выбрал в настройках.
          В data-theme и в BG уходит уже разрешённый light/dark. */
@@ -195,18 +195,18 @@
       --success: #10b981;
       --danger: #ef4444;
       /* Светлая тема — ОДИН цвет на всё: холст, карточки, дорожку
-         переключателей и нижнюю панель. Это ровно цвет системного
-         подбородка (rgb 250,247,254) — снизу шва нет, и весь экран не
-         дробится на 4 почти-белых оттенка. Разделяет элементы не цвет,
-         а рамка (--border) и тень (--shadow); активная плитка
+         переключателей. Холст чуть светлее подбородка (rgb 252,251,255),
+         нижняя панель — ровно подбородок (#faf7fe): разница в 4 единицы
+         не видна, снизу шва нет, экран не дробится на оттенки. Разделяет
+         элементы рамка (--border) и тень (--shadow); активная плитка
          переключателя — единственное исключение, она чисто белая. */
-      --bg: #faf7fe;
-      --card: #faf7fe;
+      --bg: #fcfbff;
+      --card: #fcfbff;
       --text: #1b1c1f;
       --text-muted: #6c7075;
-      --border: #e4e2ea;
+      --border: #e8e5ef;
       --shadow: 0 1px 2px rgba(20,20,32,0.06), 0 3px 12px rgba(20,20,32,0.05);
-      --track: #faf7fe;
+      --track: #fcfbff;
       --radius: 16px;
       --nav-h: 64px;
       /* Безопасные зоны. В Android WebView env(safe-area-inset-*) для статус-бара
@@ -232,24 +232,29 @@
       --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
 
+    /* Тёмная тема — ОДИН цвет на всё: #121318 = замеренный системный
+       подбородок при тёмной схеме (rgb 18,19,24). Холст, карточки,
+       дорожка переключателей, нижняя панель совпадают — швов нет.
+       Разделяет элементы рамка и тень. */
     [data-theme="dark"] {
       color-scheme: dark;
-      --bg: #1c1917;
-      --card: #292524;
+      --bg: #121318;
+      --card: #121318;
       --text: #fafaf9;
-      --text-muted: #a8a29e;
-      --border: #44403c;
+      --text-muted: #a1a1ac;
+      --border: #2b2d36;
       --primary-light: #4c0519;
-      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 14px rgba(0,0,0,0.28);
-      --track: #14110f;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 4px 14px rgba(0,0,0,0.3);
+      --track: #121318;
     }
 
-    /* Чёрная тема: глубокий чёрный фон, белый текст, минимум украшений.
-       Карточки отличаются от фона еле заметно — как в Down Dog. */
+    /* Чёрная тема — ОДИН цвет на всё: чистый #000. Карточки/дорожка/панель
+       не отличаются от фона цветом, только рамкой #232323. Системный
+       подбородок при этой теме тоже почти #000 — снизу шва нет. */
     [data-theme="black"] {
       color-scheme: dark;
       --bg: #000000;
-      --card: #0e0e0e;
+      --card: #000000;
       --text: #ffffff;
       --text-muted: #8b8b8b;
       --border: #232323;
@@ -473,7 +478,7 @@
     }
     [data-theme="dark"] .bottom-nav {
       background: #121318;
-      border-top-color: #262a33;
+      border-top-color: var(--border);
     }
 
     .content {
@@ -573,8 +578,10 @@
        --primary, реальная тень. Раньше текст был серый и активная вкладка
        не отличалась от прочих. */
     .seg-btn.active { background: #ffffff; color: var(--primary); font-weight: 700; box-shadow: var(--shadow); }
-    [data-theme="dark"] .seg-btn.active,
-    [data-theme="black"] .seg-btn.active { background: var(--card); }
+    /* В тёмных темах фон = карточка = холст, поэтому активную плитку
+       приподнимаем отдельным цветом чуть светлее фона. */
+    [data-theme="dark"] .seg-btn.active { background: #262933; box-shadow: none; }
+    [data-theme="black"] .seg-btn.active { background: #1b1b1b; box-shadow: none; }
     .seg-btn:focus { outline: none; }
     .seg-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
@@ -1755,7 +1762,7 @@
     }
     /* «Авто» — половина светлой, половина тёмной: тема идёт от телефона */
     .theme-swatch.auto { background: linear-gradient(135deg, #ffffff 50%, #1c1917 50%); }
-    .theme-swatch.light { background: linear-gradient(135deg, #ffffff 50%, #faf7fe 50%); }
+    .theme-swatch.light { background: linear-gradient(135deg, #ffffff 50%, #fcfbff 50%); }
     .theme-swatch.dark { background: linear-gradient(135deg, #292524 50%, #1c1917 50%); }
     .theme-swatch.black { background: linear-gradient(135deg, #141414 50%, #000000 50%); }
 
@@ -3321,15 +3328,15 @@
    * 1. CONFIG — константы
    * ========================================================= */
   const CONFIG = {
-    /* Номер сборки. Меняется при каждой правке — виден внизу Настроек.
-       Если на экране старый номер, значит браузер отдаёт кэш, а не новый файл. */
-    /* Формат: 0.МАЖОР.МИНОР.
-       0      — канал «бета», пока идёт активная разработка.
+    /* Версия. Виден внизу Настроек. Если на экране старый номер — браузер
+       отдаёт кэш, а не новый файл.
+       Формат: 0.МАЖОР.МИНОР.
+       0      — пока идёт активная разработка.
        МАЖОР  — число крупных нововведений (абонементы, клубы, английский,
                 подсчёт денег, оплата, …).
-       МИНОР  — мелкие доработки поверх текущего мажора.
+       МИНОР  — мелкие доработки; ПОДНИМАТЬ на 1 при КАЖДОЙ новой выкладке.
        В интерфейсе называется «версия», не «сборка». */
-    BUILD: '0.4.1 · бета',
+    BUILD: '0.4.2',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -8198,8 +8205,8 @@
       /* Подложка самого окна приложения живёт в нативном коде и по умолчанию
          светлая — она и просвечивала белым по краям экрана. Передаём ей
          текущий цвет фона. */
-      var bgByTheme = { light: '#faf7fe', dark: '#1c1917', black: '#000000' };
-      var bg = bgByTheme[themeName] || '#faf7fe';
+      var bgByTheme = { light: '#fcfbff', dark: '#1c1917', black: '#000000' };
+      var bg = bgByTheme[themeName] || '#fcfbff';
       document.documentElement.style.backgroundColor = bg;
       /* color-scheme preboot ставит инлайном — иначе первый кадр приходит в
          системной схеме, а не в нашей. Инлайн перебивает правило
