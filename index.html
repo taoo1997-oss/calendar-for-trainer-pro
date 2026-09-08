@@ -3387,7 +3387,7 @@
                 подсчёт денег, оплата, …).
        МИНОР  — мелкие доработки; ПОДНИМАТЬ на 1 при КАЖДОЙ новой выкладке.
        В интерфейсе называется «версия», не «сборка». */
-    BUILD: '0.4.7',
+    BUILD: '0.4.8',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -4425,6 +4425,8 @@
     /* Обучение */
     '☁ Активна': '☁ Active',
     '☁ Синхронизировано': '☁ Synced',
+    '☁ Сохраняю…': '☁ Saving…',
+    '⚠ Не сохранено — повторю': '⚠ Not saved — will retry',
     'Вход через Яндекс выполнен': 'Signed in with Yandex',
     'Токен не получен': 'No token received',
     'Данные не сохраняются (предпросмотр)': 'Data is not being saved (preview)',
@@ -5875,6 +5877,10 @@
   const Cloud = {
     _syncing: false,
     _lastPush: 0,
+    /* Есть локальные правки, ещё не подтверждённые сервером. Ставится в
+       schedulePush() при каждом изменении, снимается только после
+       успешного push(). Пока true — приложение будет пытаться отправить. */
+    _pushDirty: false,
     /* Пока не выполнена первая загрузка с сервера, отправлять НЕЛЬЗЯ.
        Раньше приложение стартовало с пустым состоянием, успевало отправить
        эту пустоту в облако и затирало настоящие данные. */
@@ -6041,6 +6047,11 @@
         return false;
       } finally {
         this._syncing = false;
+        /* Правка, пришедшая пока шёл этот запрос, — досылаем сразу. */
+        if (this._pushDirty && this._initialSyncDone && !urgent) {
+          clearTimeout(this._pushTimer);
+          this._pushTimer = setTimeout(function () { Cloud._flushPush(); }, 0);
+        }
       }
     },
 
@@ -6198,21 +6209,58 @@
       return { ok: ok, reason: ok ? 'pushed' : 'push-failed', count: n };
     },
 
-    /** Отложенный push после изменений (не чаще раза в 2 сек) */
+    /* Индикатор в Настройки → Данные: 'saving' | 'ok' | 'retry' */
+    _setSyncBadge(state) {
+      var el = document.getElementById('syncStatus');
+      if (!el) return;
+      if (state === 'saving') el.textContent = t('☁ Сохраняю…');
+      else if (state === 'retry') el.textContent = t('⚠ Не сохранено — повторю');
+      else if (state === 'ok') {
+        el.textContent = t('☁ Синхронизировано') + ' ' +
+          new Date().toLocaleTimeString(I18N.locale(), { hour: '2-digit', minute: '2-digit' });
+      }
+    },
+
+    /**
+     * Выгрузка после КАЖДОГО изменения.
+     *
+     * Раньше был debounce 1.5с — при быстром сворачивании правка не
+     * успевала уйти. Теперь: помечаем «есть несохранённое» сразу, а
+     * отправку коалесцируем — если запрос уже в полёте, ждём его и по
+     * завершении досылаем накопившееся. Ни потока запросов, ни потерянных
+     * правок: последнее состояние гарантированно уходит на сервер.
+     * Маленькая пауза 250мс — только чтобы склеить одну операцию, которая
+     * зовёт persist() несколько раз подряд (напр. syncAllGroupClasses).
+     */
     schedulePush() {
       if (!this.canSync()) return;
       // До первой успешной загрузки из облака ничего не отправляем,
       // иначе стартовое пустое состояние затрёт настоящие данные.
       if (!this._initialSyncDone) return;
+      this._pushDirty = true;
+      this._setSyncBadge('saving');
+      if (this._syncing) return;                 // текущий push заберёт свежее состояние сам
       clearTimeout(this._pushTimer);
-      this._pushTimer = setTimeout(function () {
-        Cloud.push().then(function (ok) {
-          if (ok) {
-            var el = document.getElementById('syncStatus');
-            if (el) el.textContent = t('☁ Синхронизировано') + ' ' + new Date().toLocaleTimeString(I18N.locale(), { hour: '2-digit', minute: '2-digit' });
-          }
-        });
-      }, 1500);
+      this._pushTimer = setTimeout(function () { Cloud._flushPush(); }, 250);
+    },
+
+    /** Выполнить одну выгрузку и, если за это время появились новые
+        правки или не получилось, — повторить. */
+    async _flushPush() {
+      if (this._syncing || !this._initialSyncDone || !this.canSync()) return;
+      clearTimeout(this._pushTimer);
+      this._pushDirty = false;                   // снимок состояния берём сейчас
+      var ok = await this.push();                // push() читает актуальный State
+      if (ok) {
+        this._setSyncBadge('ok');
+        if (this._pushDirty) {                   // пока шёл запрос — новые правки
+          this._pushTimer = setTimeout(function () { Cloud._flushPush(); }, 250);
+        }
+      } else {
+        this._pushDirty = true;                  // не вышло — попробуем ещё
+        this._setSyncBadge('retry');
+        this._pushTimer = setTimeout(function () { Cloud._flushPush(); }, 4000);
+      }
     }
   };
 
@@ -11960,13 +12008,11 @@
        чем потерять вечер занятий. */
     function saveOnLeave() {
       try { if (State.currentUser) State.persist(); } catch (e) {}
-      /* Обычный Cloud.schedulePush() ждёт 1.5с тишины — если Android
-         выгрузит вкладку раньше (а сворачивание/уход с экрана — самый
-         частый повод), несинхронизированная правка так и останется
-         только на этом устройстве. Здесь — досрочный пуш с keepalive,
-         чтобы запрос пережил закрытие вкладки. */
+      /* Штатная выгрузка коалесцирует и может ещё ждать; при уходе с
+         экрана шлём немедленно и с keepalive, чтобы запрос пережил
+         закрытие/заморозку вкладки. */
       try {
-        if (State.currentUser && Cloud.canSync() && Cloud._initialSyncDone) {
+        if (State.currentUser && Cloud.canSync() && Cloud._initialSyncDone && Cloud._pushDirty) {
           clearTimeout(Cloud._pushTimer);
           Cloud.push(false, true);
         }
@@ -11974,8 +12020,13 @@
     }
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'hidden') saveOnLeave();
+      else if (Cloud._pushDirty) { try { Cloud._flushPush(); } catch (e) {} }
     });
     window.addEventListener('pagehide', saveOnLeave);
+    /* Сеть вернулась — досылаем то, что не ушло. */
+    window.addEventListener('online', function () {
+      if (Cloud._pushDirty) { try { Cloud._flushPush(); } catch (e) {} }
+    });
 
     /* —— Ничего не падает молча ——
        Если где-то в обработчике случится ошибка, приложение раньше просто
