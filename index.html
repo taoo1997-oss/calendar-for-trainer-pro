@@ -58,18 +58,27 @@
   <script>
     (function preboot() {
       var BG = { light: '#fdf2f4', dark: '#1c1917', black: '#000000' };
-      var theme = 'light', primary = '';
+      /* 'auto' — не тема, а «спросить телефон»: значение по умолчанию и
+         для новых установок, и пока человек сам не выбрал в настройках.
+         В data-theme и в BG уходит уже разрешённый light/dark. */
+      var pref = 'auto', primary = '';
       try {
         var raw = localStorage.getItem('dance_trainer_theme_v1');
         if (raw) {
           var t = JSON.parse(raw);
-          if (t && BG[t.theme]) theme = t.theme;
+          if (t && (t.theme === 'auto' || BG[t.theme])) pref = t.theme;
           if (t && typeof t.primary === 'string') primary = t.primary;
           if (t && t.calStyle) {
             document.documentElement.setAttribute('data-cal-style', t.calStyle);
           }
         }
-      } catch (e) { /* приватный режим или битый ключ — остаёмся светлыми */ }
+      } catch (e) { /* приватный режим или битый ключ — остаёмся на auto */ }
+      var theme = pref;
+      if (theme === 'auto') {
+        var sysDark = false;
+        try { sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {}
+        theme = sysDark ? 'dark' : 'light';
+      }
       var el = document.documentElement;
       el.setAttribute('data-theme', theme);
       el.style.backgroundColor = BG[theme];
@@ -435,23 +444,33 @@
 
     /* —— Стык с системной полосой жестов ——
 
-       Под приложением остаётся полоса, которую рисует система, и дотянуться
-       до неё со страницы нельзя: окно заканчивается выше неё, а вырезы
-       env(safe-area-inset-*) равны нулю (замер на устройстве: окно 387×805
-       внутри экрана 388×862, снизу остаётся 18 CSS-пикселей). Сквозной режим
-       «под панелями» включает Chrome, не сайт: viewport-fit=cover мы шлём, но
-       в этой версии он покрывает только вырез под камеру.
+       Под приложением остаётся полоса ~18 CSS-пикселей, которую рисует
+       система, и дотянуться до неё со страницы нельзя: окно заканчивается
+       выше неё, env(safe-area-inset-bottom) там 0 (замер на устройстве:
+       окно 387×805 внутри экрана 388×862; Chrome обновлён — не изменилось).
+       Сквозной режим «под панелями» тут включает Chrome, не сайт.
 
-       Цвет полосы задаёт телефон и берёт из СВОЕЙ темы, а не из нашей —
-       проверено переключением: при светлой теме телефона она была
-       rgb(250,247,254), при тёмной стала rgb(18,19,24). Наша тёмная панель
-       rgb(41,37,36) оказывалась заметно светлее, и низ экрана читался
-       ступенькой.
+       Замер сборки 80 показал главное: живой фон страницы в тёмной теме
+       rgb(28,25,23), а подбородок при этом светлый. Значит Chrome берёт
+       его цвет НЕ со страницы (иначе color-scheme/фон бы работали), а из
+       манифеста — background_color = #fdf2f4. Значение одно, вшивается при
+       установке ярлыка, на лету не меняется.
 
-       Совпасть в точности нельзя — это цвет прошивки. Но можно не спорить:
-       когда телефон в тёмной теме, опускаем панель до той же глубины, и низ
-       читается одной полосой. Светлую тему не трогаем: там панель белая и с
-       белой полосой сливается сама. */
+       Отсюда стратегия:
+       • Светлая тема — панель делаем ровно #fdf2f4 (= background_color),
+         панель и подбородок сливаются, стыка нет. От контента панель
+         отделяем тенью: фон контента такой же.
+       • Тёмная/чёрная — background_color под них не подстроить, поэтому
+         подбородок останется светлым на светлом телефоне. На тёмном
+         телефоне системная полоса сама уходит в тёмное; опускаем панель
+         до той же глубины, чтобы ступеньки не было.
+       • Тема по умолчанию — «Авто» (следует телефону), поэтому тёмное
+         приложение почти всегда встречается с тёмным телефоном. */
+    [data-theme="light"] .bottom-nav {
+      background: #fdf2f4;
+      border-top-color: #f0dde1;
+      box-shadow: 0 -1px 10px rgba(28, 25, 23, 0.05);
+    }
     @media (prefers-color-scheme: dark) {
       [data-theme="dark"] .bottom-nav {
         background: #141212;
@@ -1719,10 +1738,10 @@
     [data-launch="installed"] .splash-logo { display: none; }
     [data-launch="installed"] .splash-bg { background: #FDF2F4; }
 
-    .theme-options { display: flex; gap: 8px; }
+    .theme-options { display: flex; gap: 6px; }
     .theme-option {
-      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;
-      padding: 12px 6px; border: 1.5px solid var(--border); border-radius: 14px;
+      flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px;
+      padding: 12px 4px; border: 1.5px solid var(--border); border-radius: 14px;
       background: var(--card); color: var(--text-muted);
       font-family: inherit; font-size: 0.72rem; font-weight: 600; cursor: pointer;
     }
@@ -1730,6 +1749,8 @@
     .theme-swatch {
       width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border);
     }
+    /* «Авто» — половина светлой, половина тёмной: тема идёт от телефона */
+    .theme-swatch.auto { background: linear-gradient(135deg, #ffffff 50%, #1c1917 50%); }
     .theme-swatch.light { background: linear-gradient(135deg, #ffffff 50%, #fdf2f4 50%); }
     .theme-swatch.dark { background: linear-gradient(135deg, #292524 50%, #1c1917 50%); }
     .theme-swatch.black { background: linear-gradient(135deg, #141414 50%, #000000 50%); }
@@ -2696,6 +2717,10 @@
       <div class="settings-block">
         <h3>Тема</h3>
         <div class="theme-options" id="themeOptions">
+          <button type="button" class="theme-option" data-theme-pick="auto">
+            <span class="theme-swatch auto"></span>
+            <span>Авто</span>
+          </button>
           <button type="button" class="theme-option" data-theme-pick="light">
             <span class="theme-swatch light"></span>
             <span>Светлая</span>
@@ -3289,7 +3314,7 @@
   const CONFIG = {
     /* Номер сборки. Меняется при каждой правке — виден внизу Настроек.
        Если на экране старый номер, значит браузер отдаёт кэш, а не новый файл. */
-    BUILD: '2026-09-08 · 80',
+    BUILD: '2026-09-08 · 81',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -3304,7 +3329,7 @@
     COLOR_PRESETS: ['#e11d48', '#db2777', '#c026d3', '#7c3aed', '#2563eb', '#0891b2', '#059669', '#d97706'],
     DEFAULT_SETTINGS: {
       calendarName: '', dark: false, primary: '#e11d48',
-      calStyle: 'standard', theme: 'light', profileName: '', profilePhone: '',
+      calStyle: 'standard', theme: 'auto', profileName: '', profilePhone: '',
       yandexClientId: '', clubMonth: ''
     },
     /* ClientID можно задать здесь или в Настройках */
@@ -8123,12 +8148,25 @@
       this._closingFromBack = false;
       return true;
     },
+    /* 'auto' → light/dark по теме телефона. Всё остальное — как есть.
+       В data-theme и в расчёт цветов уходит только разрешённое значение. */
+    resolveTheme(pref) {
+      if (pref === 'auto' || !pref) {
+        var sysDark = false;
+        try { sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {}
+        return sysDark ? 'dark' : 'light';
+      }
+      return pref;
+    },
     applyTheme() {
       var s = State.settings;
-      var themeName = s.theme || (s.dark ? 'dark' : 'light');
+      var pref = s.theme || (s.dark ? 'dark' : 'light');
+      var themeName = this.resolveTheme(pref);
       document.documentElement.setAttribute('data-theme', themeName);
+      // Подсвечиваем выбранное человеком, а не разрешённое: у «Авто»
+      // своя кнопка, и она должна гореть, когда тема идёт от телефона.
       document.querySelectorAll('[data-theme-pick]').forEach(function (b) {
-        b.classList.toggle('active', b.dataset.themePick === themeName);
+        b.classList.toggle('active', b.dataset.themePick === pref);
       });
       var calStyle = s.calStyle || 'standard';
       if (calStyle === 'compact') calStyle = 'standard';
@@ -8170,7 +8208,10 @@
          это оформление телефона, а не собственность профиля. */
       try {
         localStorage.setItem('dance_trainer_theme_v1', JSON.stringify({
-          theme: themeName,
+          // Кладём выбор человека ('auto' в том числе), а не разрешённое
+          // значение: телефон мог сменить тему между запусками, и preboot
+          // должен разрешать 'auto' заново, а не помнить старый light/dark.
+          theme: pref,
           primary: s.primary || '#e11d48',
           calStyle: calStyle
         }));
@@ -11339,7 +11380,8 @@
             'не входит в окно по высоте: ' + Math.round((scr.height || 0) - window.innerHeight),
             'вырезы: сверху ' + envPx('top') + ', снизу ' + envPx('bottom'),
             '--sab: ' + cs.getPropertyValue('--sab').trim() + ', --sab-nav: ' + cs.getPropertyValue('--sab-nav').trim(),
-            'тема: ' + document.documentElement.getAttribute('data-theme') + ', color-scheme: ' + cs.colorScheme,
+            'тема: ' + ((State.settings && State.settings.theme) || '—') + ' → ' +
+              document.documentElement.getAttribute('data-theme') + ', color-scheme: ' + cs.colorScheme,
             'фон страницы: ' + cs.backgroundColor,
             'фон панели: ' + (function () {
               var nav = document.querySelector('.bottom-nav');
@@ -11984,11 +12026,24 @@
         if (!btn) return;
         var name = btn.dataset.themePick;
         State.settings.theme = name;
-        State.settings.dark = (name !== 'light');
+        State.settings.dark = (UI.resolveTheme(name) !== 'light');
         State.persist();
         UI.applyTheme();
       });
     }
+
+    /* Тема «Авто» следует за телефоном на ходу: человек сменил системную
+       тему, пока приложение открыто — перекрашиваемся сразу. Явно
+       выбранную light/dark/black не трогаем. */
+    try {
+      var mqDark = window.matchMedia('(prefers-color-scheme: dark)');
+      var onSchemeChange = function () {
+        var pref = (State.settings && State.settings.theme) || 'auto';
+        if (pref === 'auto') UI.applyTheme();
+      };
+      if (mqDark.addEventListener) mqDark.addEventListener('change', onSchemeChange);
+      else if (mqDark.addListener) mqDark.addListener(onSchemeChange);
+    } catch (e) { /* нет matchMedia — тема просто не будет следовать в реальном времени */ }
 
     UI.$('clientSearch').addEventListener('input', function () { UI.renderClients(); });
     Money.fillSelect();
