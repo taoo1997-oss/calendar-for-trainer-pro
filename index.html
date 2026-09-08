@@ -284,11 +284,11 @@
 
     /* —— Общие правки для обеих тёмных тем —— */
 
-    /* Опасные кнопки были на белом фоне и светились посреди тёмного экрана */
+    /* Опасные кнопки в тёмных темах: та же приподнятая карточка, красный текст. */
     [data-theme="dark"] .btn-danger,
     [data-theme="black"] .btn-danger {
-      background: rgba(239, 68, 68, 0.14);
-      color: #fca5a5;
+      background: var(--card); color: #fca5a5;
+      border: 1px solid var(--border);
     }
 
     /* Поля поиска рисовались браузером по умолчанию — отсюда белые скруглённые
@@ -356,7 +356,8 @@
     [data-theme="black"] .person-avatar { background: rgba(255,255,255,0.07); color: var(--text); }
     [data-theme="black"] .money-row-icon { background: rgba(255,255,255,0.05); }
     [data-theme="black"] .btn-secondary {
-      background: rgba(255,255,255,0.06); color: var(--text);
+      background: var(--card); color: var(--text);
+      border: 1px solid var(--border);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -515,8 +516,18 @@
     }
     .btn:active { transform: scale(0.98); opacity: 0.9; }
     .btn-primary { background: var(--primary); color: white; }
-    .btn-secondary { background: var(--primary-light); color: var(--primary); }
-    .btn-danger { background: #fef2f2; color: #dc2626; }
+    /* Вторичные и «опасные» кнопки — тот же приподнятый вид, что карточки
+       статистики в Клиентах: фон карточки, рамка, тень. Отличаются только
+       цветом текста. Раньше secondary был бледно-розовой заливкой (на почти
+       белом фоне не читался), а danger — своей розовой заливкой. */
+    .btn-secondary {
+      background: var(--card); color: var(--primary);
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+    }
+    .btn-danger {
+      background: var(--card); color: var(--danger);
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+    }
     .btn-ghost { background: transparent; color: var(--text-muted); padding: 8px 10px; }
     .btn-sm { padding: 8px 12px; font-size: 0.8rem; }
     .btn-block { width: 100%; }
@@ -952,14 +963,25 @@
     .empty { text-align: center; padding: 48px 20px; color: var(--text-muted); font-size: 0.875rem; }
     .empty-icon { font-size: 2rem; margin-bottom: 10px; opacity: 0.4; }
 
-    .week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 8px; }
-    .week-nav-title { font-weight: 500; font-size: 0.875rem; text-align: center; flex: 1; color: var(--text); }
+    /* Переключатель недели — тот же «бабл», что выбор месяца в Клиентах
+       (.club-month-bar): карточка с рамкой и тенью, стрелки-кнопки внутри. */
+    .week-nav {
+      display: flex; align-items: center; gap: 4px; margin-bottom: 14px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 4px 6px; box-shadow: var(--shadow);
+    }
+    .week-nav .btn-ghost {
+      flex: 0 0 auto; width: 40px; height: 40px; padding: 0;
+      color: var(--primary); font-size: 1rem; border-radius: 12px;
+    }
+    .week-nav .btn-ghost:active { background: var(--primary-light); transform: none; opacity: 1; }
+    .week-nav-title { font-weight: 600; font-size: 0.95rem; text-align: center; flex: 1; min-width: 0; color: var(--text); }
 
     .week-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 12px; }
     .day-btn {
       display: flex; flex-direction: column; align-items: center;
-      padding: 6px 2px 5px; border-radius: 10px; border: 1px solid var(--border);
-      background: var(--card); cursor: pointer; box-shadow: none;
+      padding: 7px 2px 6px; border-radius: 12px; border: 1px solid var(--border);
+      background: var(--card); cursor: pointer; box-shadow: var(--shadow);
     }
     .day-btn .day-name { font-size: 0.65rem; color: var(--text-muted); font-weight: 500; }
     .day-btn .day-num { font-size: 0.9375rem; font-weight: 600; margin-top: 2px; letter-spacing: -0.02em; }
@@ -970,7 +992,7 @@
       border-radius: 50%; margin-top: 4px;
     }
     .day-btn.active.has-classes::after { background: rgba(255,255,255,0.9); }
-    .day-btn.today:not(.active) { box-shadow: 0 0 0 1.5px var(--primary); }
+    .day-btn.today:not(.active) { box-shadow: 0 0 0 1.5px var(--primary), var(--shadow); }
 
     .time-grid {
       border: 1px solid var(--border); border-radius: 16px;
@@ -3341,7 +3363,7 @@
                 подсчёт денег, оплата, …).
        МИНОР  — мелкие доработки; ПОДНИМАТЬ на 1 при КАЖДОЙ новой выкладке.
        В интерфейсе называется «версия», не «сборка». */
-    BUILD: '0.4.3',
+    BUILD: '0.4.4',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
