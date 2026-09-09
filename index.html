@@ -8,9 +8,20 @@
        а его нижняя половина вместе со списком уезжала под клавиатуру.
        С этим значением раскладка честно сжимается до свободного места. -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+  <!-- theme-color задаёт фон статус-бара в установленном PWA (и в Safari).
+       Значение здесь — только для первого кадра; дальше preboot и
+       UI.applyTheme() переписывают его под выбранную тему:
+       #fcfbff светлая, #121318 тёмная/чёрная. -->
   <meta name="theme-color" content="#fcfbff">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- НЕ "black-translucent": при нём iOS игнорирует theme-color и рисует
+       прозрачный статус-бар, из-за чего в тёмной теме сверху оставалась
+       светлая полоса (запечённый background_color манифеста). "default"
+       заставляет iOS красить бар в текущий theme-color и сам подбирать
+       цвет текста по его яркости — статус-бар следует теме приложения.
+       Изменение применится после переустановки ярлыка (значение
+       запекается при добавлении на экран «Домой»). -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <!-- Название под иконкой на экране "Домой" в iOS — фиксированное, не зависит
        от document.title (тот меняется по разделам приложения). -->
   <meta name="apple-mobile-web-app-title" content="CoachCalendar">
@@ -3451,7 +3462,7 @@
                 подсчёт денег, оплата, …).
        МИНОР  — мелкие доработки; ПОДНИМАТЬ на 1 при КАЖДОЙ новой выкладке.
        В интерфейсе называется «версия», не «сборка». */
-    BUILD: '0.4.12',
+    BUILD: '0.4.13',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -11916,6 +11927,16 @@
         var capped = Math.min(envBottomPx(), 34);
         var cur = parseFloat(getComputedStyle(root).getPropertyValue('--sab')) || 0;
         if (Math.abs(cur - capped) > 0.5) root.style.setProperty('--sab', capped + 'px');
+
+        /* Нижнее меню на iOS прижимаем к краю. Полный вырез (34px) как отступ
+           панели уводил иконки слишком высоко над домашним индикатором
+           (bugs — «меню высоко»). Панель закреплена по нижнему краю
+           (position: fixed; bottom: 0), поэтому уменьшение отступа не
+           открывает полосу фона снизу — только опускает сами иконки.
+           Оставляем ~10px воздуха над индикатором. */
+        var navInset = capped > 4 ? 10 : capped;
+        var curNav = parseFloat(getComputedStyle(root).getPropertyValue('--sab-nav')) || 0;
+        if (Math.abs(curNav - navInset) > 0.5) root.style.setProperty('--sab-nav', navInset + 'px');
       }
 
       function run() { apply(); applyIOS(); }
