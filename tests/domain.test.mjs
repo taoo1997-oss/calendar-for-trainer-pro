@@ -29,7 +29,7 @@ function extractMethod(src, name) {
   throw new Error('Не закрыт метод ' + name);
 }
 
-const names = ['timeToMinutes', 'overlapColumns', 'formatPhoneInput', 'escapeHtml', 'isValidPhone'];
+const names = ['timeToMinutes', 'overlapColumns', 'formatPhoneInput', 'escapeHtml', 'isValidPhone', 'isSafeId', 'sanitizeData'];
 const ctx = {};
 vm.createContext(ctx);
 vm.runInContext('var Domain = {\n' + names.map((n) => extractMethod(html, n)).join(',\n') + '\n};', ctx);
@@ -69,6 +69,29 @@ test('formatPhoneInput: обычный ввод', () => {
   assert.equal(Domain.formatPhoneInput('+7 701 123 45 67'), '+7 701 123-45-67');
   // Лишняя цифра после полного номера отбрасывается, номер не сдвигается
   assert.equal(Domain.formatPhoneInput('+7 701 123-45-678'), '+7 701 123-45-67');
+});
+
+test('sanitizeData: id с разметкой отбрасывается вместе со ссылками на него', () => {
+  const bad = 'x"><img src=x onerror=alert(1)>';
+  const r = plain(Domain.sanitizeData({
+    clients: [{ id: bad, name: 'А' }, { id: 'lq3k9a1b2c', name: 'Б' }, { id: 1700000000000, name: 'Старый id-число' }],
+    classes: [
+      { id: 'c1', date: '2026-10-06', time: '9:30', clientIds: ['lq3k9a1b2c', bad], payments: { lq3k9a1b2c: true, [bad]: true }, clubGroupId: bad },
+      { id: 'c2', date: '2026-10-06"><b>', time: '10:00' }
+    ],
+    clubGroups: [{ id: '0b5e9c1e-7a1d-4c2e-9f00-1a2b3c4d5e6f', name: 'Г', memberIds: ['m1', bad] }],
+    incomes: [{ id: 'i1', clientId: bad }],
+    settings: { theme: 'dark' }
+  }));
+  assert.deepEqual(r.clients.map((c) => c.id), ['lq3k9a1b2c', 1700000000000]);
+  assert.deepEqual(r.classes.map((c) => c.id), ['c1']);
+  assert.deepEqual(r.classes[0].clientIds, ['lq3k9a1b2c']);
+  assert.deepEqual(Object.keys(r.classes[0].payments), ['lq3k9a1b2c']);
+  assert.equal('clubGroupId' in r.classes[0], false);
+  assert.deepEqual(r.clubGroups[0].memberIds, ['m1']);
+  assert.equal('clientId' in r.incomes[0], false);
+  assert.deepEqual(r.settings, { theme: 'dark' });
+  assert.equal(r.dropped, 2);
 });
 
 test('escapeHtml экранирует обе кавычки', () => {

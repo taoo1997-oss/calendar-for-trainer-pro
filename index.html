@@ -2,6 +2,12 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <!-- Content-Security-Policy. Весь код встроен в эту страницу, поэтому
+       'unsafe-inline' для скриптов нужен. Политика всё равно закрывает
+       главное: чужой скрипт не подгрузить, и данные не отправить никуда,
+       кроме нашего сервера и формы отзыва. Новый внешний адрес (оплата,
+       аналитика) надо дописать сюда, иначе браузер его заблокирует. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://calendar-backend.taoo1997.workers.dev https://formsubmit.co; manifest-src 'self' data:; worker-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'self'">
   <!-- interactive-widget=resizes-content — ключевая часть. По умолчанию
        экранная клавиатура НЕ уменьшает страницу: она просто накрывает её
        сверху. Поэтому окно высотой 92dvh оставалось во всю высоту экрана,
@@ -4975,6 +4981,8 @@
         this.settings = Object.assign({}, CONFIG.DEFAULT_SETTINGS);
         return;
       }
+      data = Domain.sanitizeData(data);
+      if (data.dropped) console.warn('[hydrate] отброшено записей с некорректным id/датой:', data.dropped);
       this.clients = data.clients || [];
       this.classes = data.classes || [];
       this.clubMembers = data.clubMembers || [];
@@ -4996,6 +5004,64 @@
    * ========================================================= */
   const Domain = {
     uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); },
+    /** id, который безопасно вставлять в HTML-атрибут: uid(), UUID, число. */
+    isSafeId(v) {
+      return (typeof v === 'string' || (typeof v === 'number' && isFinite(v))) &&
+        /^[A-Za-z0-9_-]{1,64}$/.test(String(v));
+    },
+    /**
+     * Очистка данных, пришедших извне: файл резервной копии, сервер,
+     * слепок «до синхронизации». id и ссылки на id вставляются в разметку
+     * без экранирования (data-id="…"), поэтому запись с id вроде
+     * x"><img onerror=…> выполнила бы код на вкладке и через синхронизацию
+     * разъехалась бы по всем устройствам аккаунта. Такие записи
+     * отбрасываются, ссылки на них вычищаются, дата и время занятия
+     * проверяются по формату. Вернёт новый объект; dropped — сколько
+     * записей выброшено.
+     */
+    sanitizeData(data) {
+      var safe = Domain.isSafeId;
+      var dropped = 0;
+      function list(arr, extra) {
+        if (!Array.isArray(arr)) return arr;
+        return arr.filter(function (x) {
+          var ok = x && typeof x === 'object' && !Array.isArray(x) && safe(x.id) && (!extra || extra(x));
+          if (!ok) dropped++;
+          return ok;
+        });
+      }
+      function ids(arr) { return Array.isArray(arr) ? arr.filter(safe) : arr; }
+      function keys(obj) {
+        if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+        var out = {};
+        Object.keys(obj).forEach(function (k) { if (safe(k)) out[k] = obj[k]; });
+        return out;
+      }
+      function ref(o, field) {
+        if (o[field] != null && !safe(o[field])) delete o[field];
+      }
+      var out = Object.assign({}, data);
+      out.clients = list(data.clients, function (c) {
+        if (c.abonement && typeof c.abonement === 'object') c.abonement.saleIds = ids(c.abonement.saleIds);
+        return true;
+      });
+      out.classes = list(data.classes, function (c) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(String(c.date)) || !/^\d{1,2}:\d{2}$/.test(String(c.time))) return false;
+        c.clientIds = ids(c.clientIds);
+        c.payments = keys(c.payments);
+        ref(c, 'clubGroupId');
+        return true;
+      });
+      out.clubMembers = list(data.clubMembers);
+      out.clubGroups = list(data.clubGroups, function (g) {
+        g.memberIds = ids(g.memberIds);
+        g.payments = keys(g.payments);
+        return true;
+      });
+      out.incomes = list(data.incomes, function (inc) { ref(inc, 'clientId'); return true; });
+      out.dropped = dropped;
+      return out;
+    },
     /**
      * Сетка месяца для календаря: 6 строк по 7 дней, начиная с понедельника.
      * Дни соседних месяцев тоже попадают — помечены other, чтобы их
@@ -5693,6 +5759,46 @@
         return false;
       }
     },
+    /* Проверка пароля для входа без связи. Раньше в localStorage лежал тот
+       же 'sha256:…', что уходит на сервер, — по сути пароль от аккаунта.
+       Теперь там отдельная строка: соль + sha256(соль + хэш). Предъявить
+       её серверу нельзя, а сверить введённый офлайн пароль можно. */
+    async makePassCheck(passHash) {
+      var salt = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(function (b) {
+        return b.toString(16).padStart(2, '0');
+      }).join('');
+      return 'v1$' + salt + '$' + (await this.hash(salt + ':' + passHash)).slice(7);
+    },
+    /**
+     * Один раз после обновления: у аккаунтов, которые уже есть на сервере
+     * (есть token), заменить сохранённый passHash на passCheck. Аккаунты,
+     * заведённые до сервера (без token), сохраняют passHash: по нему
+     * loginLocal переносит их на сервер.
+     */
+    async migratePassHashes() {
+      var db = this.loadUsers();
+      var changed = false;
+      for (var i = 0; i < (db.users || []).length; i++) {
+        var u = db.users[i];
+        if (!u.token || !u.passHash) continue;
+        if (!u.passCheck && !this.isLegacyHash(u.passHash)) u.passCheck = await this.makePassCheck(u.passHash);
+        delete u.passHash;
+        changed = true;
+      }
+      if (changed) this.saveUsers(db);
+    },
+    /** Совпадает ли введённый пароль с тем, что сохранён на этом устройстве. */
+    async checkLocalPassword(password, user) {
+      if (!user) return false;
+      if (user.passCheck) {
+        var parts = String(user.passCheck).split('$');
+        if (parts.length !== 3) return false;
+        var passHash = await this.hash(password || '');
+        return (await this.hash(parts[1] + ':' + passHash)).slice(7) === parts[2];
+      }
+      // Записи до 0.4.17 и аккаунты, заведённые до сервера
+      return !!user.passHash && this.verifyPassword(password, user.passHash);
+    },
     normalizeLogin(login) {
       return (login || '').trim().toLowerCase();
     },
@@ -5789,7 +5895,7 @@
      * его локальные ключи (данные, статус подписки) на новый id, а не
      * оставляем их сиротами под старым.
      */
-    _adoptServerUser(serverUser, token, passHash) {
+    _adoptServerUser(serverUser, token, passCheck) {
       var db = this.loadUsers();
       var loginKey = this.loginKey(serverUser.login);
       var oldEntry = db.users.find(function (u) { return u.loginKey === loginKey; }) || null;
@@ -5814,7 +5920,9 @@
         login: serverUser.login,
         loginKey: loginKey,
         loginKind: serverUser.loginKind,
-        passHash: passHash !== undefined ? passHash : (oldEntry ? oldEntry.passHash : null),
+        // passHash сюда больше не пишется (см. makePassCheck); старый
+        // отпадает вместе с прежней записью при первом входе на 0.4.17.
+        passCheck: passCheck !== undefined ? passCheck : (oldEntry ? oldEntry.passCheck || null : null),
         yandexId: serverUser.loginKind === 'yandex' ? serverUser.id : null,
         token: token,
         createdAt: (oldEntry && oldEntry.createdAt) || new Date().toISOString()
@@ -5853,7 +5961,7 @@
         return { ok: false, error: res.error };
       }
 
-      return { ok: true, user: this._adoptServerUser(res.data.user, res.data.token, passHash) };
+      return { ok: true, user: this._adoptServerUser(res.data.user, res.data.token, await this.makePassCheck(passHash)) };
     },
     async loginLocal(login, password) {
       password = password || '';
@@ -5865,14 +5973,14 @@
       var res = await Api.post('/api/login', { login: v.login, passHash: passHash });
 
       if (res.ok) {
-        return { ok: true, user: this._adoptServerUser(res.data.user, res.data.token, passHash) };
+        return { ok: true, user: this._adoptServerUser(res.data.user, res.data.token, await this.makePassCheck(passHash)) };
       }
 
       if (res.networkError) {
         // Оффлайн работает только на устройстве, где уже был успешный вход.
         var db = this.loadUsers();
         var cached = this.findUserByLogin(v.login, db);
-        if (cached && cached.token && cached.passHash && await this.verifyPassword(password, cached.passHash)) {
+        if (cached && cached.token && await this.checkLocalPassword(password, cached)) {
           db.sessionId = cached.id;
           this.saveUsers(db);
           return { ok: true, user: cached, offline: true };
@@ -5880,15 +5988,17 @@
         return { ok: false, error: 'Нет связи с сервером — проверьте интернет' };
       }
 
-      if (res.status === 404) {
-        // Сервер про такой логин не знает — возможно, это аккаунт,
-        // заведённый на этом устройстве ДО подключения сервера. Если
-        // введённый пароль совпадает с тем, что здесь уже сохранён,
-        // молча регистрируем его на сервере тем же паролем — это тот же
-        // человек, а не новый.
+      if (res.status === 401 || res.status === 404) {
+        // Сервер с 0.4.17 одинаково отвечает 401 на «нет такого логина» и
+        // «не тот пароль» (404 — от старого воркера). Возможно, это аккаунт,
+        // заведённый на этом устройстве ДО подключения сервера: если
+        // введённый пароль совпадает с сохранённым здесь, регистрируем его
+        // на сервере тем же паролем — это тот же человек, а не новый.
+        // Если логин на сервере уже есть, регистрация вернёт 409, и
+        // человек увидит обычное «неверный логин или пароль».
         var localDb = this.loadUsers();
         var localUser = this.findUserByLogin(v.login, localDb);
-        if (localUser && localUser.passHash && await this.verifyPassword(password, localUser.passHash)) {
+        if (localUser && !localUser.token && await this.checkLocalPassword(password, localUser)) {
           var regRes = await Api.post('/api/register', {
             name: localUser.name || 'Без имени',
             login: v.login,
@@ -5896,11 +6006,14 @@
             passHash: passHash
           });
           if (regRes.ok) {
-            return { ok: true, user: this._adoptServerUser(regRes.data.user, regRes.data.token, passHash), migrated: true };
+            return { ok: true, user: this._adoptServerUser(regRes.data.user, regRes.data.token, await this.makePassCheck(passHash)), migrated: true };
           }
-          return { ok: false, error: regRes.error || 'Не удалось подключить аккаунт к серверу' };
+          if (regRes.status !== 409) {
+            return { ok: false, error: regRes.error || 'Не удалось подключить аккаунт к серверу' };
+          }
         }
-        return { ok: false, notFound: true, error: 'Аккаунт с таким логином не найден' };
+        if (res.status === 404) return { ok: false, notFound: true, error: 'Аккаунт с таким логином не найден' };
+        return { ok: false, error: res.error };
       }
 
       return { ok: false, error: res.error };
@@ -6337,6 +6450,7 @@
           });
         }
       } catch (e) {}
+      remote = Domain.sanitizeData(remote);
       if (Array.isArray(remote.clients)) State.clients = remote.clients;
       if (Array.isArray(remote.classes)) State.classes = remote.classes;
       if (Array.isArray(remote.clubMembers)) State.clubMembers = remote.clubMembers;
@@ -7244,6 +7358,7 @@
       if (data.settings !== undefined && (typeof data.settings !== 'object' || data.settings === null || Array.isArray(data.settings))) {
         throw new Error('settings должен быть объектом');
       }
+      data = Domain.sanitizeData(data);
       if (data.clients) {
         State.clients = data.clients.filter(function (c) {
           return c && typeof c === 'object' && c.id && c.name;
@@ -10248,17 +10363,26 @@
         source: source || 'unknown',
         since: new Date().toISOString()
       });
-      if (State.currentUser && State.currentUser.token) {
-        Api.post('/api/subscription/activate', { source: source, days: days }, true);
-      }
       try { UI.renderSubscription(); } catch (e) {}
+      return this._confirmWithServer('/api/subscription/activate', { source: source, days: days });
     },
 
     deactivate: function () {
       this._save({ plan: 'free', until: null, source: null, since: null });
-      if (State.currentUser && State.currentUser.token) {
-        Api.post('/api/subscription/deactivate', {}, true);
-      }
+      try { UI.renderSubscription(); } catch (e) {}
+      return this._confirmWithServer('/api/subscription/deactivate', {});
+    },
+
+    /* Локальный статус меняется сразу, а сервер его подтверждает. Если
+       сервер отказал (activate без оплаты отдаёт 403), возвращаем то, что
+       записано на сервере, а не ждём следующего запуска. Без связи
+       оставляем локальное: /api/me поправит при следующем старте. */
+    _confirmWithServer: async function (path, body) {
+      if (!(State.currentUser && State.currentUser.token)) return;
+      var res = await Api.post(path, body, true);
+      if (res.ok || res.networkError) return;
+      console.warn('[Sub]', path, res.status, res.error);
+      await this.refreshFromServer();
       try { UI.renderSubscription(); } catch (e) {}
     },
 
@@ -10752,6 +10876,7 @@
             okText: 'Вернуть'
           }).then(async function (yes) {
             if (!yes) return;
+            bk = Domain.sanitizeData(bk);
             State.clients = bk.clients || [];
             State.classes = bk.classes || [];
             State.clubMembers = bk.clubMembers || [];
@@ -13088,6 +13213,7 @@
       return;
     }
 
+    try { await Auth.migratePassHashes(); } catch (e) { console.warn('[migratePassHashes]', e); }
     var session = Auth.getSessionUser();
     if (session) {
       await enterApp(session);
