@@ -224,6 +224,9 @@
          системные элементы: подложку окна, полосу прокрутки, отскок при
          перелистывании до края. Отсюда белые полоски и уголки. */
       color-scheme: light;
+      /* Кривые для анимаций окон и шторок */
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
       --primary: #e11d48;
       --primary-dark: #be123c;
       --primary-light: #ffe4e6;
@@ -1274,6 +1277,77 @@
     #contactsPickModal #contactsAddBtn { flex: 0 0 auto; margin-top: 12px; }
 
     .modal-overlay.show { display: flex; }
+
+    /* —— Появление и уход окон ——
+       Окна открываются и закрываются классом .show (display: none ↔ flex),
+       JS при этом ничего не ждёт. Вход рисует @starting-style, уход —
+       переход display с allow-discrete: окно остаётся на экране, пока
+       идёт анимация. Браузеры без этих возможностей (Chrome < 117,
+       Safari < 17.4) показывают окна мгновенно, как раньше.
+       Телефон: шторка выезжает снизу. ПК и диалоги по центру: лёгкое
+       увеличение из 0.96. Вход 320 мс по кривой шторки, уход быстрее. */
+    /* Гаснет только затемнение подложки, а не она целиком: иначе вместе с
+       ней становилась прозрачной и шторка, и её уезда вниз не было видно. */
+    .modal-overlay {
+      background-color: rgba(28,25,23,0);
+      transition: background-color 200ms var(--ease-out), display 200ms allow-discrete;
+    }
+    .modal-overlay.show {
+      background-color: rgba(28,25,23,0.35);
+      transition: background-color 280ms var(--ease-out), display 280ms allow-discrete;
+    }
+    /* У окна Pro своя карточка со своей анимацией входа — оно гаснет целиком */
+    #paywallModal:not(.show) {
+      opacity: 0;
+      transition: opacity 200ms var(--ease-out), background-color 200ms var(--ease-out), display 200ms allow-discrete;
+    }
+    /* Уходящее окно уже не ловит нажатия, даже пока ещё видно */
+    .modal-overlay:not(.show) { pointer-events: none; }
+    .modal-overlay > .modal {
+      transform: translateY(100%);
+      transition: transform 200ms var(--ease-out);
+    }
+    .modal-overlay.show > .modal {
+      transform: none;
+      transition: transform 320ms var(--ease-drawer);
+    }
+    .modal-overlay > .modal.ask-modal,
+    .modal-overlay > .modal.cal-modal,
+    .modal-overlay > .modal.conflict-modal {
+      transform: scale(0.96);
+      opacity: 0;
+      transition: transform 200ms var(--ease-out), opacity 200ms var(--ease-out);
+    }
+    .modal-overlay.show > .modal.ask-modal,
+    .modal-overlay.show > .modal.cal-modal,
+    .modal-overlay.show > .modal.conflict-modal {
+      transform: none;
+      opacity: 1;
+      transition: transform 240ms var(--ease-out), opacity 240ms var(--ease-out);
+    }
+    @starting-style {
+      .modal-overlay.show { background-color: rgba(28,25,23,0); }
+      .modal-overlay.show > .modal { transform: translateY(100%); }
+      .modal-overlay.show > .modal.ask-modal,
+      .modal-overlay.show > .modal.cal-modal,
+      .modal-overlay.show > .modal.conflict-modal { transform: scale(0.96); opacity: 0; }
+    }
+    /* Ручка шторки: показывает, что её можно смахнуть вниз */
+    .modal-overlay > .modal.can-drag::before {
+      content: ''; display: block; width: 36px; height: 4px; border-radius: 2px;
+      margin: 0 auto -4px; background: var(--border);
+    }
+    .modal.is-dragging { transition: none !important; }
+    /* Шапка шторки — место для жеста: браузер не уводит его в прокрутку */
+    .modal.can-drag > .modal-header { touch-action: none; }
+    @media (prefers-reduced-motion: reduce) {
+      /* Без движения: только мягкое появление подложки и окна */
+      .modal-overlay > .modal,
+      .modal-overlay.show > .modal { transform: none !important; }
+      @starting-style {
+        .modal-overlay.show > .modal { transform: none; }
+      }
+    }
     /* Свой диалог: спрашиваем и предупреждаем в стилистике приложения,
        а не системным окном браузера с чужими шрифтами и кнопками. */
     #askModal { z-index: 800; align-items: center; padding: 24px; }
@@ -2010,17 +2084,23 @@
       line-height: 1.3; white-space: nowrap; flex-shrink: 0;
     }
 
+    /* Тост сверху. Снизу он садился на нижнее меню, а при открытой форме —
+       прямо на кнопки «Сохранить» и галочки согласия, о которых и сообщал.
+       Цвета инвертированы от темы: тёмный на светлой, светлый на тёмной
+       (раньше в тёмной теме почти чёрный тост терялся на фоне). */
     .toast {
-      position: fixed; bottom: calc(var(--nav-h) + 20px); left: 50%;
-      transform: translateX(-50%) translateY(12px);
-      background: #1c1917; color: white; padding: 12px 18px; border-radius: 12px;
-      font-size: 0.8125rem; font-weight: 500; opacity: 0; transition: all 0.25s;
-      z-index: 600; pointer-events: none; max-width: 90%; text-align: center;
-    }
-    .auth-gate ~ .toast, body > .toast {
-      bottom: 24px;
+      position: fixed; top: calc(var(--sat) + 12px); bottom: auto; left: 50%;
+      transform: translateX(-50%) translateY(-12px);
+      background: var(--text); color: var(--card); padding: 12px 18px; border-radius: 12px;
+      font-size: 0.875rem; font-weight: 500; opacity: 0;
+      transition: opacity 250ms ease, transform 250ms ease;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      z-index: 900; pointer-events: none; max-width: min(90%, 420px); text-align: center;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    @media (prefers-reduced-motion: reduce) {
+      .toast, .toast.show { transform: translateX(-50%); }
+    }
 
     .color-presets { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
     .color-swatch {
@@ -2333,6 +2413,19 @@
     @media (min-width: 480px) {
       .modal-overlay { align-items: center; padding: 20px; }
       .modal { border-radius: 20px; max-height: calc(100% - 40px); padding: 16px 24px 24px; }
+      /* Окно по центру — не выезжает снизу, а проявляется */
+      .modal-overlay > .modal {
+        transform: scale(0.96); opacity: 0;
+        transition: transform 200ms var(--ease-out), opacity 200ms var(--ease-out);
+      }
+      .modal-overlay.show > .modal {
+        transform: none; opacity: 1;
+        transition: transform 240ms var(--ease-out), opacity 240ms var(--ease-out);
+      }
+      @starting-style {
+        .modal-overlay.show > .modal { transform: scale(0.96); opacity: 0; }
+      }
+      .modal-overlay > .modal.can-drag::before { display: none; }
     }
 
     /* ══════════════════════════════════════════════════════════════
@@ -8457,7 +8550,9 @@
       if (!t) return;
       t.textContent = I18N.t(msg);
       t.classList.add('show');
-      setTimeout(function () { t.classList.remove('show'); }, 2500);
+      // Новый тост продлевает показ: старый таймер не прячет его раньше времени
+      clearTimeout(this._toastTimer);
+      this._toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2500);
     },
     renderContactsPick(query) {
       var box = this.$('contactsPickList');
@@ -12584,6 +12679,57 @@
       // (Закрывающие функции сами зовут _syncGuard, но conflict/tour — нет.)
       UI._syncGuard();
     });
+
+    /* Шторку на телефоне можно смахнуть вниз за шапку. Закрытие идёт через
+       крестик этого окна: у каждого своя логика закрытия (ответ промиса,
+       сторож истории), и обходить её нельзя. Короткий или медленный жест
+       возвращает шторку на место. */
+    (function wireSheetDrag() {
+      var phone = window.matchMedia('(max-width: 479px)');
+      Array.prototype.forEach.call(document.querySelectorAll('.modal-overlay > .modal'), function (m) {
+        if (/\b(ask|cal|conflict)-modal\b/.test(m.className)) return;
+        if (m.querySelector('.modal-header .modal-close')) m.classList.add('can-drag');
+      });
+      var drag = null;
+      document.addEventListener('pointerdown', function (e) {
+        if (drag || e.pointerType === 'mouse' || !phone.matches) return;
+        var head = e.target.closest('.modal.can-drag .modal-header');
+        if (!head || e.target.closest('button, input, select, textarea, a, label')) return;
+        var sheet = head.closest('.modal');
+        if (!sheet.parentElement.classList.contains('show') || sheet.scrollTop > 0) return;
+        drag = { sheet: sheet, id: e.pointerId, y0: e.clientY, t0: Date.now(), dy: 0, moved: false };
+      });
+      document.addEventListener('pointermove', function (e) {
+        if (!drag || e.pointerId !== drag.id) return;
+        var dy = e.clientY - drag.y0;
+        if (!drag.moved) {
+          if (Math.abs(dy) < 6) return;
+          drag.moved = true;
+          drag.t0 = Date.now();
+          try { drag.sheet.setPointerCapture(drag.id); } catch (err) {}
+          drag.sheet.classList.add('is-dragging');
+        }
+        drag.dy = dy;
+        // Вверх шторка почти не идёт: сопротивление растёт с расстоянием
+        var y = dy >= 0 ? dy : -Math.sqrt(-dy) * 2;
+        drag.sheet.style.transform = 'translateY(' + y + 'px)';
+      });
+      function end(e) {
+        if (!drag || e.pointerId !== drag.id) return;
+        var d = drag;
+        drag = null;
+        if (!d.moved) return;
+        var velocity = d.dy / Math.max(1, Date.now() - d.t0);
+        d.sheet.classList.remove('is-dragging');
+        d.sheet.style.transform = '';
+        if (d.dy > 110 || (d.dy > 24 && velocity > 0.11)) {
+          var close = d.sheet.querySelector('.modal-header .modal-close');
+          if (close) close.click();
+        }
+      }
+      document.addEventListener('pointerup', end);
+      document.addEventListener('pointercancel', end);
+    })();
 
     /* Нажатие мимо окна накладки — то же, что «Пропустить» */
     (function wireConflict() {
