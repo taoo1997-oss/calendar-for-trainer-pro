@@ -3488,7 +3488,7 @@
                 подсчёт денег, оплата, …).
        МИНОР  — мелкие доработки; ПОДНИМАТЬ на 1 при КАЖДОЙ новой выкладке.
        В интерфейсе называется «версия», не «сборка». */
-    BUILD: '0.4.15',
+    BUILD: '0.4.16',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -3910,6 +3910,7 @@
     'Действует до': 'Valid until',
     'Тестовый доступ — без срока': 'Test access — no expiry',
     'Доступ без ограничения по сроку': 'Access with no time limit',
+    'Бесплатный доступ ко всем возможностям': 'Free access to every feature',
     'Вернуться на бесплатный тариф': 'Switch back to the free plan',
     'Вернули бесплатный тариф': 'Switched back to the free plan',
     'Оплата подключается после оформления самозанятости.': 'Payment will be enabled after self-employment registration.',
@@ -8768,22 +8769,26 @@
 
       if (pro) {
         var until = Sub.untilText();
+        // 'comp' — аккаунт из белого списка на сервере (calendar-backend/
+        // comp-accounts.js): Pro бесплатно и без срока, отключать нечем.
+        var isComp = Sub.get().source === 'comp';
         statusEl.className = 'sub-status is-pro';
         statusEl.innerHTML =
           '<span class="sub-status-ic">★</span>' +
           '<span class="sub-status-body">' +
             '<span class="sub-status-plan">' + I18N.t('Подписка Pro активна') + '</span>' +
             '<span class="sub-status-note">' +
-              (until ? I18N.t('Действует до') + ' ' + Domain.escapeHtml(until)
-                     : I18N.t('Доступ без ограничения по сроку')) +
+              (isComp ? I18N.t('Бесплатный доступ ко всем возможностям')
+                      : (until ? I18N.t('Действует до') + ' ' + Domain.escapeHtml(until)
+                               : I18N.t('Доступ без ограничения по сроку'))) +
             '</span>' +
           '</span>';
         usageEl.className = 'sub-usage hidden';
         usageEl.innerHTML = '';
-        actionsEl.innerHTML =
+        actionsEl.innerHTML = isComp ? '' :
           '<button type="button" class="btn btn-secondary btn-block btn-sm" data-action="sub-deactivate">' +
             I18N.t('Вернуться на бесплатный тариф') + '</button>';
-        hintEl.textContent = I18N.t('Оплата подключается после оформления самозанятости.');
+        hintEl.textContent = isComp ? '' : I18N.t('Оплата подключается после оформления самозанятости.');
       } else {
         statusEl.className = 'sub-status';
         statusEl.innerHTML =
