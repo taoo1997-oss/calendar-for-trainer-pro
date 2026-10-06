@@ -1097,6 +1097,15 @@
       min-height: 0;
       box-shadow: 0 1px 3px rgba(28,25,23,0.08);
     }
+    /* Занятия, которые пересекаются по времени, делят ширину поровну
+       (колонки считает Domain.overlapColumns). Без этого верхняя карточка
+       целиком закрывала нижнюю. */
+    .time-class.is-split {
+      left: calc(4px + (100% - 10px) * var(--col) / var(--cols));
+      right: auto;
+      width: calc((100% - 10px) / var(--cols) - 3px);
+      padding: 6px 7px;
+    }
     .time-class-head {
       display: flex; align-items: center; justify-content: space-between;
       gap: 8px; flex-shrink: 0;
@@ -1190,6 +1199,7 @@
       top: auto !important;
       left: auto !important;
       right: auto !important;
+      width: auto !important;
       height: auto !important;
       min-height: 0;
       margin: 0;
@@ -5417,6 +5427,35 @@
       if (d.charAt(0) === '7' || d.charAt(0) === '8') return d.length === 11;
       return d.length >= 8;
     },
+    /**
+     * Колонки для занятий одного дня, отсортированных по времени начала.
+     * Занятия, которые пересекаются (прямо или по цепочке), образуют
+     * группу; каждое встаёт в первую свободную колонку группы. Вернёт
+     * массив той же длины: { col, cols }, cols — сколько колонок в группе.
+     */
+    overlapColumns(classes) {
+      var out = [];
+      var group = [];          // индексы занятий текущей группы
+      var colEnds = [];        // когда освобождается каждая колонка группы
+      var groupEnd = -1;
+      function flush() {
+        group.forEach(function (i) { out[i].cols = colEnds.length; });
+        group = [];
+        colEnds = [];
+      }
+      (classes || []).forEach(function (cls, i) {
+        var st = Domain.timeToMinutes(cls.time);
+        var en = st + (cls.duration || 60);
+        if (group.length && st >= groupEnd) flush();
+        var col = colEnds.findIndex(function (end) { return end <= st; });
+        if (col === -1) { col = colEnds.length; colEnds.push(en); } else colEnds[col] = en;
+        out[i] = { col: col, cols: 1 };
+        group.push(i);
+        groupEnd = group.length === 1 ? en : Math.max(groupEnd, en);
+      });
+      flush();
+      return out;
+    },
     shadeColor(color, percent) {
       var num = parseInt(color.replace('#', ''), 16);
       var amt = Math.round(2.55 * percent);
@@ -5493,7 +5532,7 @@
     },
     escapeHtml(str) {
       if (!str) return '';
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     },
     formatTimeRange(startTime, duration) {
       var parts = (startTime || '00:00').split(':').map(Number);
@@ -8503,6 +8542,7 @@
        ещё что-то есть, ставит сторожа заново. Перебрать историю нечем. */
     _modalStack: [],
     _guardPushed: false,
+    _guardBackPending: false,
     _ignorePop: false,
     _useHistory() { return typeof window.AndroidBridge === 'undefined'; },
     /** Открыто ли что-то, что должна закрывать «назад» */
@@ -8519,10 +8559,21 @@
       var need = this._blockingOpen();
       if (need && !this._guardPushed) {
         try { history.pushState({ dtGuard: 1 }, ''); this._guardPushed = true; } catch (e) {}
-      } else if (!need && this._guardPushed) {
-        this._guardPushed = false;
-        this._ignorePop = true;
-        try { history.back(); } catch (e) { this._ignorePop = false; }
+      } else if (!need && this._guardPushed && !this._guardBackPending) {
+        /* Снимаем сторожа не сразу, а после текущего обработчика. «Закрыл
+           одно окно — открыл другое» (карточка → «Изменить») на миг
+           оставляет стек пустым: немедленный history.back() уходил, следом
+           openModal делал pushState, асинхронный back отрабатывал уже
+           после него — и следующий крестик уводил из приложения. */
+        this._guardBackPending = true;
+        var self = this;
+        setTimeout(function () {
+          self._guardBackPending = false;
+          if (!self._guardPushed || self._blockingOpen()) return;
+          self._guardPushed = false;
+          self._ignorePop = true;
+          try { history.back(); } catch (e) { self._ignorePop = false; }
+        }, 0);
       }
     },
     openModal(id) {
@@ -9022,7 +9073,8 @@
         grid += '<div class="time-slot"><div class="time-label">' + String(h).padStart(2, '0') + ':00</div><div class="time-content"></div></div>';
       }
       grid += '<div class="time-events">';
-      dayClasses.forEach(function (cls) {
+      var cols = Domain.overlapColumns(dayClasses);
+      dayClasses.forEach(function (cls, i) {
         var startMin = Domain.timeToMinutes(cls.time);
         var dur = cls.duration || 60;
         var top = ((startMin - dayStartMin) / 60) * hourH;
@@ -9031,7 +9083,7 @@
           height += top;
           top = 0;
         }
-        grid += UI.renderClassCard(cls, top, height);
+        grid += UI.renderClassCard(cls, top, height, cols[i]);
       });
       grid += '</div></div>';
 
@@ -9136,7 +9188,7 @@
         '<div class="day-total-sum">' + UI.formatMoney(m.total) + '</div>' +
       '</div>';
     },
-    renderClassCard(cls, top, height) {
+    renderClassCard(cls, top, height, col) {
       var clients = (cls.clientIds || []).map(function (id) { return State.clientById(id); }).filter(Boolean);
       var paidCount = clients.filter(function (c) { return cls.payments && cls.payments[c.id]; }).length;
       var status = Domain.classPaymentStatus(cls);
@@ -9167,8 +9219,10 @@
           ? '<span class="time-class-paid-count">' + (paidCount === clients.length ? '✓ ' + paidCount + '/' + clients.length : '✗ ' + paidCount + '/' + clients.length) + '</span>'
           : '');
 
-      return '<div class="time-class ' + status + '" data-action="class-open" data-id="' + cls.id +
-        '" style="top:' + top + 'px;height:' + height + 'px;z-index:' + z + '">' +
+      var split = col && col.cols > 1;
+      return '<div class="time-class ' + status + (split ? ' is-split' : '') + '" data-action="class-open" data-id="' + cls.id +
+        '" style="top:' + top + 'px;height:' + height + 'px;z-index:' + z +
+        (split ? ';--col:' + col.col + ';--cols:' + col.cols : '') + '">' +
         titleHtml +
         '<div class="time-class-head"><div class="time-class-time">' + Domain.formatTimeRange(cls.time, cls.duration || 60) + '</div>' + countHtml + '</div>' +
         '<div class="time-class-clients">' + namesHtml + '</div>' +
@@ -12285,6 +12339,24 @@
         try { el.setSelectionRange(el.value.length, el.value.length); } catch (err) {}
       }
     });
+    /* Вставка номера из буфера в поле, где пока только подставленное «+7 »:
+       номер приносит свой код («+7 999…», «8 999…»), и без этого цифры
+       склеивались с подставленной семёркой — +7 999 111-22-33 сохранялся
+       как +7 799 911-12-23. Вставленное заменяет поле целиком. */
+    document.addEventListener('paste', function (e) {
+      var el = e.target;
+      if (!el || el.tagName !== 'INPUT' || el.type !== 'tel') return;
+      if (el.dataset.intlPhone !== undefined) return;
+      var all = el.selectionStart === 0 && el.selectionEnd === el.value.length;
+      if (Domain.normalizePhone(el.value).length > 1 && !all) return;
+      var text = (e.clipboardData || window.clipboardData);
+      text = text ? text.getData('text') : '';
+      if (!/\d/.test(text || '')) return;
+      e.preventDefault();
+      el.value = Domain.formatPhoneInput(text);
+      try { el.setSelectionRange(el.value.length, el.value.length); } catch (err) {}
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, true);
     document.addEventListener('focusout', function (e) {
       var el = e.target;
       if (!el || el.tagName !== 'INPUT' || el.type !== 'tel') return;
