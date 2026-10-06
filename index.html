@@ -231,7 +231,8 @@
       --primary-dark: #be123c;
       --primary-light: #ffe4e6;
       --success: #10b981;
-      --danger: #ef4444;
+      /* #ef4444 на светлом фоне давал 3,7:1 — меньше нормы 4,5:1 для текста */
+      --danger: #dc2626;
       /* Светлая тема — ОДИН цвет на всё: холст, карточки, дорожку
          переключателей. Холст чуть светлее подбородка (rgb 252,251,255),
          нижняя панель — ровно подбородок (#faf7fe): разница в 4 единицы
@@ -281,7 +282,9 @@
       --text: #fafaf9;
       --text-muted: #a1a1ac;
       --border: #2b2d36;
-      --primary-light: #4c0519;
+      /* Было #4c0519: густой бордо на «Стоимости занятия» и аватарах
+         выглядел как сообщение об ошибке. Лёгкий оттенок карточки. */
+      --primary-light: #2a1820;
       --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 4px 14px rgba(0,0,0,0.3);
       --track: #121318;
     }
@@ -494,7 +497,7 @@
     .nav-item {
       flex: 1; height: var(--nav-h); display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 3px; border: none; background: none; color: var(--text-muted);
-      font-size: 0.68rem; font-weight: 500; cursor: pointer; padding: 8px;
+      font-size: 0.72rem; font-weight: 500; cursor: pointer; padding: 8px;
       letter-spacing: 0;
     }
     .nav-item.active { color: var(--primary); }
@@ -564,6 +567,11 @@
     }
     .btn-danger {
       background: var(--card); color: var(--danger);
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+    }
+    /* Нейтральная: обычное действие рядом с опасным (профиль и «Выйти») */
+    .btn-neutral {
+      background: var(--card); color: var(--text);
       border: 1px solid var(--border); box-shadow: var(--shadow);
     }
     .btn-ghost { background: transparent; color: var(--text-muted); padding: 8px 10px; }
@@ -678,7 +686,7 @@
       border-radius: 14px; padding: 12px; text-align: center;
     }
     .club-summary-chip .val { font-size: 1.15rem; font-weight: 700; color: var(--primary); letter-spacing: -0.02em; }
-    .club-summary-chip .lbl { font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; }
+    .club-summary-chip .lbl { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
     .club-group-card {
       background: var(--card); border: 1.5px solid var(--border); border-radius: 14px;
       padding: 14px 16px; margin-bottom: 10px; cursor: pointer;
@@ -993,6 +1001,8 @@
       display: flex; align-items: center; justify-content: center;
       font-weight: 600; font-size: 0.9375rem; flex-shrink: 0;
     }
+    [data-theme="dark"] .client-avatar,
+    [data-theme="black"] .client-avatar { color: #fb7185; }
     .client-item { display: flex; align-items: center; gap: 12px; }
     .client-info { flex: 1; min-width: 0; }
     .client-name { font-weight: 500; font-size: 0.9375rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1021,7 +1031,7 @@
       padding: 7px 2px 6px; border-radius: 12px; border: 1px solid var(--border);
       background: var(--card); cursor: pointer; box-shadow: var(--shadow);
     }
-    .day-btn .day-name { font-size: 0.65rem; color: var(--text-muted); font-weight: 500; }
+    .day-btn .day-name { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
     .day-btn .day-num { font-size: 0.9375rem; font-weight: 600; margin-top: 2px; letter-spacing: -0.02em; }
     .day-btn.active { background: var(--primary); color: white; }
     .day-btn.active .day-name { color: rgba(255,255,255,0.75); }
@@ -1066,7 +1076,7 @@
     }
     .time-label {
       width: 42px; flex-shrink: 0; padding: 6px 6px 6px 4px;
-      font-size: 0.65rem; font-weight: 500;
+      font-size: 0.7rem; font-weight: 500;
       color: var(--text-muted); text-align: right;
       /* Вертикальная черта и подложка колонки часов упирались в скруглённые
          углы и выглядели обрубленными. Календарям она не нужна — время и так
@@ -1239,7 +1249,7 @@
       text-align: center; border: 1px solid var(--border); box-shadow: var(--shadow);
     }
     .stat-value { font-size: 1.25rem; font-weight: 600; color: var(--primary); letter-spacing: -0.03em; }
-    .stat-label { font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; font-weight: 400; }
+    .stat-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; font-weight: 400; }
 
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(28,25,23,0.35);
@@ -1752,7 +1762,7 @@
       flex: 1; min-width: 0; display: flex; flex-direction: column;
       font-size: 0.85rem; font-weight: 600; color: var(--text);
     }
-    .money-row-sub { font-size: 0.68rem; font-weight: 500; color: var(--text-muted); }
+    .money-row-sub { font-size: 0.72rem; font-weight: 500; color: var(--text-muted); }
     .money-row-sum {
       flex: 0 0 auto; font-size: 0.95rem; font-weight: 700; color: var(--text);
       white-space: nowrap;
@@ -1762,13 +1772,14 @@
 
     .stats.mini .stat-card { padding: 10px 8px; }
     .stats.mini .stat-value { font-size: 1.25rem; }
-    .stats.mini .stat-label { font-size: 0.66rem; }
+    .stats.mini .stat-label { font-size: 0.72rem; }
 
     .section-caption {
-      font-size: 0.68rem; font-weight: 600; color: var(--text-muted);
+      font-size: 0.75rem; font-weight: 600; color: var(--text-muted);
       text-transform: uppercase; letter-spacing: 0.06em;
-      margin: 14px 2px 8px;
+      margin: 24px 2px 8px;
     }
+    .section-caption-first { margin-top: 4px; }
     #section-clients [data-action="income-add"] { margin-bottom: 4px; }
     .income-row {
       display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -1777,7 +1788,7 @@
     }
     .income-row:active { background: var(--bg); }
     .income-row-note { font-size: 0.85rem; font-weight: 600; }
-    .income-row-date { font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; }
+    .income-row-date { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
     .income-row-sum { font-weight: 700; color: var(--primary); white-space: nowrap; }
 
     .day-total {
@@ -1792,7 +1803,7 @@
       font-size: 1.15rem; font-weight: 700; color: var(--primary);
       white-space: nowrap;
     }
-    .day-total-detail { font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; }
+    .day-total-detail { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
 
     /* ————— Логотип CoachCalendar ————— */
     .brand { display: inline-flex; align-items: center; gap: 8px; line-height: 1; margin: 0; }
@@ -2864,12 +2875,21 @@
       <div class="week-days" id="weekDays"></div>
       <div class="flex justify-between items-center mb-2" style="gap:8px;flex-wrap:wrap;">
         <div class="text-sm text-muted" id="selectedDayLabel">Сегодня</div>
-        <button type="button" class="btn btn-danger btn-sm" data-action="clear-day">🗑 Очистить день</button>
+        <button type="button" class="btn btn-danger btn-sm" data-action="clear-day" id="clearDayBtn">🗑 Очистить день</button>
       </div>
       <div id="dayClasses"></div>
     </div>
 
     <div id="section-clients" class="section" data-screen="clients">
+      <!-- Список клиентов первым: раньше на телефоне он начинался ниже
+           первого экрана, под доходами и статистикой. -->
+      <div class="section-caption section-caption-first">Клиенты · <span id="statClients">0</span></div>
+      <div class="search-box">
+        <input type="text" id="clientSearch" placeholder="Поиск по имени или номеру...">
+      </div>
+      <div id="clientsList"></div>
+
+      <div class="section-caption">Доходы</div>
       <div class="club-month-bar">
         <button type="button" class="club-month-arrow" data-action="money-month-prev" aria-label="Предыдущий месяц">◀</button>
         <button type="button" id="moneyMonthSelect" class="club-month-select" data-action="pick-money-month"></button>
@@ -2887,12 +2907,6 @@
         <div class="stat-card"><div class="stat-value" id="statWeek">0</div><div class="stat-label">учеников</div></div>
         <div class="stat-card"><div class="stat-value" id="statClasses">0</div><div class="stat-label">оплат</div></div>
       </div>
-
-      <div class="section-caption">Клиенты · <span id="statClients">0</span></div>
-      <div class="search-box">
-        <input type="text" id="clientSearch" placeholder="Поиск по имени или номеру...">
-      </div>
-      <div id="clientsList"></div>
     </div>
 
 
@@ -2928,7 +2942,7 @@
         <div class="avatar-big" id="profileAvatar">?</div>
         <div style="font-weight:700;font-size:1.1rem;" id="profileName">Гость</div>
         <div class="text-sm text-muted" id="profilePhone"></div>
-        <button type="button" class="btn btn-secondary btn-sm mt-3" data-action="open-auth">Редактировать профиль</button>
+        <button type="button" class="btn btn-neutral btn-sm mt-3" data-action="open-auth">Редактировать профиль</button>
         <button type="button" class="btn btn-danger btn-sm mt-2" data-action="logout">Выйти из аккаунта</button>
       </div>
 
@@ -3597,7 +3611,7 @@
                 подсчёт денег, оплата, …).
        МИНОР  — мелкие доработки; ПОДНИМАТЬ на 1 при КАЖДОЙ новой выкладке.
        В интерфейсе называется «версия», не «сборка». */
-    BUILD: '0.4.16',
+    BUILD: '0.4.17',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -4387,8 +4401,7 @@
     'Членов клуба': 'Club members',
     'Оплатили взносы': 'Fees paid',
     'Собрано за месяц': 'Collected this month',
-    'Пока нет групп — нажмите «Сформировать группу»': 'No groups yet — tap “Create a group”',
-    'Удалить группу': 'Delete group',
+    'Пока нет групп — нажмите «Сформировать группу»': 'No groups yet — tap “Create a group”',    'Удалить группу': 'Delete group',
     'Удалить группу?': 'Delete this group?',
     'Участники останутся, но перестанут числиться в этой группе.':
       'The members stay, but will no longer belong to this group.',
@@ -8651,7 +8664,13 @@
       }
       var a = this.$('contactsStatusHint');
       var b = this.$('contactsSettingsStatus');
-      if (a) a.textContent = msg;
+      // В «Новом клиенте» про недоступность не пишем: человек ещё ничего
+      // не нажимал, а кнопка импорта файла и так рядом. В настройках —
+      // пишем, там это ответ на вопрос «что с контактами».
+      if (a) {
+        a.textContent = msg;
+        a.classList.toggle('hidden', !hasNative && !hasPicker);
+      }
       if (b) b.textContent = msg;
     },
     /** Колёсики времени как в будильнике */
@@ -8789,7 +8808,12 @@
     openModal(id) {
       var el = this.$(id);
       if (!el || el.classList.contains('show')) return;
+      // Окно одно на все открытия и помнило прокрутку с прошлого раза:
+      // правка занятия открывалась внизу, без заголовка и названия.
+      // (Сбрасываем после показа: у скрытого через display:none элемента
+      // scrollTop не меняется.)
       el.classList.add('show');
+      Array.prototype.forEach.call(el.querySelectorAll('.modal, .modal-body, .paywall-scroll'), function (s) { s.scrollTop = 0; });
       this._modalStack.push(id);
       this._syncGuard();
     },
@@ -8846,9 +8870,11 @@
       document.documentElement.style.setProperty('--primary', s.primary);
       document.documentElement.style.setProperty('--primary-dark', Domain.shadeColor(s.primary, -20));
       var isDarkish = themeName !== 'light';
+      /* В тёмных темах — лёгкий оттенок акцента поверх карточки. Раньше
+         акцент затемнялся на 55%, и из #e11d48 выходил густой #550000:
+         «Стоимость занятия» и аватары выглядели как сообщение об ошибке. */
       document.documentElement.style.setProperty('--primary-light',
-        themeName === 'black' ? Domain.shadeColor(s.primary, -72)
-          : (isDarkish ? Domain.shadeColor(s.primary, -55) : Domain.shadeColor(s.primary, 88)));
+        isDarkish ? 'color-mix(in srgb, ' + s.primary + ' 14%, var(--card))' : Domain.shadeColor(s.primary, 88));
       /* Статус-бар (theme-color) = цвет шапки, чтобы полоса вверху не
          выделялась цветной лентой, а бесшовно продолжала приложение.
          Раньше здесь стоял акцентный s.primary — отсюда красная полоса.
@@ -9247,6 +9273,9 @@
       var dayClasses = State.classes.filter(function (c) { return c.date === State.selectedDate; }).sort(function (a, b) { return a.time.localeCompare(b.time); });
       var container = this.$('dayClasses');
       var hourH = CONFIG.HOUR_HEIGHT || 96;
+      // Очищать пустой день нечего — красная кнопка там только пугала
+      var clearBtn = this.$('clearDayBtn');
+      if (clearBtn) clearBtn.classList.toggle('hidden', !dayClasses.length);
 
       /* Сетка строится по реальному дню, а не по фиксированным 08–22:
          начинаем с часа первого занятия и заканчиваем часом последнего.
@@ -9905,8 +9934,9 @@
       }
       var note = this.$('clubArchiveNote');
       if (note) note.classList.toggle('hidden', !this.isClubArchive());
+      // Формировать группу не из кого, пока в клубе нет ни одного человека
       var btn = document.querySelector('.club-form-group-btn');
-      if (btn) btn.classList.toggle('hidden', this.isClubArchive());
+      if (btn) btn.classList.toggle('hidden', this.isClubArchive() || !State.clubMembers.length);
     },
     renderClub() {
       var key = this.clubMonth();
@@ -9915,7 +9945,9 @@
 
       var sum = Services.clubOverallStatsForMonth(key);
       var sumEl = this.$('clubSummary');
-      if (sumEl) {
+      var clubEmpty = !State.clubMembers.length && !State.clubGroups.length;
+      if (sumEl) sumEl.classList.toggle('hidden', clubEmpty);
+      if (sumEl && !clubEmpty) {
         sumEl.innerHTML =
           '<div class="club-summary-chip"><div class="val">' + sum.groups + '</div><div class="lbl">Групп</div></div>' +
           '<div class="club-summary-chip"><div class="val">' + sum.members + '</div><div class="lbl">Членов клуба</div></div>' +
@@ -9925,7 +9957,10 @@
 
       var groupsEl = this.$('clubGroupsList');
       if (groupsEl) {
-        if (!State.clubGroups.length) {
+        if (clubEmpty) {
+          // Ниже и так стоит «Нет членов клуба — нажмите «+»»
+          groupsEl.innerHTML = '';
+        } else if (!State.clubGroups.length) {
           groupsEl.innerHTML = '<div class="text-sm text-muted" style="padding:8px 0;">Пока нет групп — нажмите «Сформировать группу»</div>';
         } else {
           groupsEl.innerHTML = State.clubGroups.map(function (g) {
@@ -10734,6 +10769,22 @@
           setAuthMode(el.dataset.panel, el.dataset.mode);
           break;
         case 'register-local': {
+          /* Поля проверяем по порядку сверху вниз, до галочек: раньше при
+             пустой форме человек слышал только про согласие и не узнавал,
+             что не заполнены имя, телефон и пароль. */
+          var regName = document.getElementById('regName');
+          var regPass = document.getElementById('regPass');
+          var regLogin = Auth.validateLogin(authLoginValue('reg'));
+          var regProblem =
+            (!regName.value.trim() && { msg: 'Укажите имя', field: regName }) ||
+            (!regLogin.ok && { msg: regLogin.error, field: document.getElementById(authMode('reg') === 'phone' ? 'regPhone' : 'regLogin') }) ||
+            (regPass.value.length < 8 && { msg: 'Пароль должен быть не короче 8 символов', field: regPass }) ||
+            null;
+          if (regProblem) {
+            UI.showToast(regProblem.msg);
+            if (regProblem.field) UI.focusField(regProblem.field);
+            break;
+          }
           var cbTerms = document.getElementById('regAcceptTerms');
           var cbPrivacy = document.getElementById('regAcceptPrivacy');
           if (!cbTerms || !cbTerms.checked || !cbPrivacy || !cbPrivacy.checked) {
