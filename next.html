@@ -2023,25 +2023,6 @@
     .hero-bar > span { display: block; height: 100%; border-radius: 6px; background: var(--primary); transition: width 600ms var(--ease-out); }
     .hero-done { font-family: var(--font-display); font-weight: 700; font-size: 26px; letter-spacing: -0.03em; margin: 10px 0 4px; }
 
-    /* ── Плитки: деньги месяца и долги ────────────────────────────── */
-    .day-tiles { display: grid; grid-template-columns: 1.25fr 1fr; gap: 10px; margin-bottom: 4px; }
-    .tile {
-      background: var(--card); border-radius: 24px; padding: 16px; border: none; text-align: left;
-      color: var(--text); font: inherit; min-width: 0;
-      transition: transform 140ms var(--ease-out);
-    }
-    button.tile:active { transform: scale(0.97); }
-    .tile-k { font-size: 13px; font-weight: 600; color: var(--text-muted); }
-    .tile-v {
-      font-family: var(--font-display); font-weight: 700; font-size: clamp(20px, 6.4vw, 26px);
-      letter-spacing: -0.035em; margin-top: 8px; white-space: nowrap; font-variant-numeric: tabular-nums;
-    }
-    .tile-v.is-warn { color: var(--warn); }
-    .tile-m { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
-    .tile-bars { display: flex; align-items: flex-end; gap: 5px; height: 34px; margin-top: 12px; }
-    .tile-bars i { flex: 1; min-height: 4px; border-radius: 4px; background: var(--surface-2); transition: height 600ms var(--ease-out); }
-    .tile-bars i.on { background: var(--primary); }
-
     /* ── День: заголовок и список ─────────────────────────────────── */
     .day-head { margin: 22px 4px 10px; }
     .day-head-actions:empty { display: none; }
@@ -2176,8 +2157,6 @@
       min-height: calc(100vh - 190px);
     }
     [data-device="desktop"] #dayHero { grid-column: 2; position: sticky; top: 112px; }
-    [data-device="desktop"] .day-tiles { grid-template-columns: 1fr 1fr; }
-    [data-device="desktop"] .tile-v { font-size: 21px; }
     [data-device="desktop"] .hero-big { font-size: 76px; }
     [data-device="desktop"] .debt-list { display: block; background: var(--card); border-radius: 24px; padding: 6px 16px; margin-top: 10px; }
 
@@ -2279,12 +2258,152 @@
     @media (prefers-reduced-motion: reduce) {
       .day-hero, .week-days.is-picked .day-btn.active { animation: none; }
     }
+
+    /* ══ Статистика (Настройки → Статистика) ══════════════════════════ */
+    .settings-tabs .seg-btn { flex: 1 1 auto; }
+    [data-device="desktop"] .settings-tabs { max-width: 560px; }
+    .stats-bar { margin: 2px 0 12px; }
+    .stats-range { max-width: 260px; }
+    .stats-grid { display: grid; gap: 12px; }
+    [data-device="desktop"] .stats-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+    .stc {
+      background: var(--card); border-radius: 26px; padding: 18px 18px 14px;
+      box-shadow: inset 0 0 0 1px var(--hairline); min-width: 0;
+    }
+    .stc-k { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+    .stc-k .ic { width: 17px; height: 17px; }
+    .stc-v {
+      font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 9vw, 38px);
+      letter-spacing: -0.04em; line-height: 1.05; margin: 10px 0 6px; font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .stc-m { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 13px; color: var(--text-muted); min-height: 24px; }
+    .stc-delta {
+      display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 8px;
+      font-weight: 700; font-size: 12px; background: var(--surface-2); color: var(--text-2);
+    }
+    .stc-delta.is-up { background: var(--ok-bg); color: var(--ok); }
+    .stc-delta.is-down { background: var(--danger-bg); color: var(--danger); }
+    .stc-plot { position: relative; height: 150px; margin: 18px 0 0; }
+    [data-device="desktop"] .stc-plot { height: 190px; }
+    .stc-bars { position: absolute; inset: 0; display: flex; align-items: stretch; gap: 6px; }
+    .stc-bar {
+      flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-end;
+      gap: 8px; padding: 0; border: none; background: none; font: inherit; color: var(--text-muted); cursor: pointer;
+      position: relative; -webkit-tap-highlight-color: transparent;
+    }
+    .stc-track { flex: 1 1 auto; display: flex; align-items: flex-end; position: relative; }
+    .stc-col {
+      display: block; width: 100%; min-height: 4px; border-radius: 8px 8px 3px 3px;
+      background: var(--surface-3); transform-origin: 50% 100%;
+      transition: background-color 220ms ease, transform 160ms var(--ease-out);
+    }
+    .stc-bar.is-empty .stc-col { background: var(--surface-2); }
+    .stc-bar.is-sel .stc-col { background: var(--primary); }
+    .stc-bar:active .stc-col { transform: scaleX(0.88); }
+    .stc-lab {
+      font-size: 11px; font-weight: 600; text-align: center; white-space: nowrap; overflow: hidden;
+      line-height: 14px; height: 14px; transition: color 200ms ease;
+    }
+    .stc-bar.is-sel .stc-lab { color: var(--text); }
+    .stc-bar.is-cur .stc-lab { font-weight: 800; }
+    .stc-avg {
+      position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed color-mix(in srgb, var(--text-muted) 45%, transparent);
+      pointer-events: none; z-index: 1; transition: bottom 420ms var(--ease-out), opacity 200ms ease;
+    }
+    .stc-avg span {
+      position: absolute; right: 0; bottom: 3px; font-size: 11px; font-weight: 600; color: var(--text-muted);
+      background: var(--card); padding: 0 0 0 6px;
+    }
+    .stc-tip {
+      position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translate(-50%, 4px); opacity: 0;
+      padding: 5px 8px; border-radius: 9px; background: var(--text); color: var(--bg);
+      font-size: 12px; font-weight: 700; white-space: nowrap; pointer-events: none; z-index: 3;
+      transition: opacity 150ms ease, transform 150ms var(--ease-out);
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .stc-bar:hover .stc-col { background: color-mix(in srgb, var(--primary) 45%, var(--surface-3)); }
+      .stc-bar.is-sel:hover .stc-col { background: var(--primary); }
+      .stc-bar:hover .stc-tip { opacity: 1; transform: translate(-50%, 0); }
+    }
+    .stc-foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--hairline); font-size: 13px; color: var(--text-muted); }
+    .stc-foot b { color: var(--text); font-weight: 650; }
+    .stats-empty { background: var(--card); border-radius: 26px; padding: 34px 20px; text-align: center; color: var(--text-muted); }
+    .stats-empty .ic { display: block; width: 30px; height: 30px; margin: 0 auto 10px; }
+
+    /* ══ Движение: общий слой ═════════════════════════════════════════
+       Бегунок под сегментами и под пунктами меню, смена разделов,
+       карточки по очереди, перестановки в списках. Логика — в JS-блоке
+       nextPolish внизу файла. */
+    .seg-toggle.has-thumb { position: relative; isolation: isolate; }
+    .seg-toggle.has-thumb .seg-btn.active { background: transparent; box-shadow: none; }
+    .seg-thumb {
+      position: absolute; top: 0; left: 0; z-index: -1; border-radius: 9px; pointer-events: none;
+      background: var(--card); box-shadow: 0 1px 3px rgba(16, 20, 30, 0.12), 0 0 0 0.5px rgba(16, 20, 30, 0.04);
+      transition: transform 320ms var(--ease-drawer), width 320ms var(--ease-drawer), height 320ms var(--ease-drawer);
+    }
+    [data-theme="dark"] .seg-thumb { background: #34353d; box-shadow: none; }
+    [data-theme="black"] .seg-thumb { background: #2c2d33; box-shadow: none; }
+    .seg-thumb.no-anim, .nav-pill.no-anim { transition: none; }
+
+    .bottom-nav.has-pill { isolation: isolate; }
+    .nav-pill {
+      position: absolute; top: 0; left: 0; z-index: -1; pointer-events: none; border-radius: 16px;
+      background: color-mix(in srgb, var(--primary) 14%, transparent);
+      transition: transform 380ms var(--ease-drawer), width 380ms var(--ease-drawer), height 380ms var(--ease-drawer);
+    }
+    [data-device="desktop"] .nav-pill { background: var(--primary); border-radius: 14px; }
+    [data-device="desktop"] .bottom-nav.has-pill .nav-item.active { background: transparent; }
+    .nav-item.is-pop .nav-icon .ic { animation: navPop 420ms var(--ease-out); }
+    @keyframes navPop { 0% { transform: scale(0.72) translateY(2px); } 60% { transform: scale(1.08); } 100% { transform: none; } }
+
+    /* Разделы: сами не прыгают, по очереди въезжают их карточки (JS) */
+    .section.active, .settings-group.active { animation: none; }
+
+    /* «+» уходит и возвращается, а не исчезает рывком */
+    .fab { transition: transform 260ms var(--ease-out), opacity 200ms ease, box-shadow 180ms ease; }
+    .fab.hidden { display: flex !important; opacity: 0; transform: scale(0.6) rotate(-90deg); pointer-events: none; }
+    .fab:active { transform: scale(0.92); }
+    [data-device="desktop"] .fab.hidden { display: none !important; }
+
+    /* Отметка: галочка вырастает, а не появляется */
+    input[type="checkbox"]::after { transform: scale(0.3) rotate(-12deg); opacity: 0; transition: transform 240ms var(--ease-out), opacity 160ms ease; }
+    input[type="checkbox"]:checked::after { transform: none; opacity: 1; }
+    input[type="checkbox"].is-tick:checked { animation: checkPop 300ms var(--ease-out); }
+    @keyframes checkPop { 0% { transform: scale(0.82); } 55% { transform: scale(1.08); } 100% { transform: none; } }
+
+    /* Полоска дня заполняется при появлении карточки */
+    .day-hero.is-enter .hero-bar > span { animation: barFill 900ms var(--ease-out) 120ms both; transform-origin: 0 50%; }
+    @keyframes barFill { from { transform: scaleX(0); } to { transform: none; } }
+
+    /* Кнопки-карточки: нажатие чувствуется */
+    .card[data-action], .club-group-card, .club-member-row[data-action], .debt-row, .theme-option, .style-option, .lang-btn, .stat-card {
+      transition: transform 160ms var(--ease-out), background-color 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+    }
+    .card[data-action]:active, .club-group-card:active, .club-member-row[data-action]:active, .theme-option:active,
+    .style-option:active, .lang-btn:active, .stat-card:active { transform: scale(0.975); }
+    .modal-close { transition: transform 160ms var(--ease-out), background-color 160ms ease; }
+    .modal-close:active { transform: scale(0.88) rotate(90deg); }
+    @media (hover: hover) and (pointer: fine) {
+      .wb-ev { transition: background-color 140ms ease, transform 180ms var(--ease-out), box-shadow 180ms ease; }
+      .wb-ev:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18); }
+      .card[data-action]:hover { box-shadow: inset 0 0 0 1px var(--hairline), 0 6px 18px rgba(0, 0, 0, 0.12); }
+    }
+
+    /* Смена темы: новая раскрывается кругом от нажатия */
+    ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .seg-thumb, .nav-pill, .stc-avg { transition: none; }
+      .nav-item.is-pop .nav-icon .ic, input[type="checkbox"].is-tick:checked, .day-hero.is-enter .hero-bar > span { animation: none; }
+      .fab.hidden { transform: none; }
+    }
   </style>
 </head>
 <body>
 
   <!-- Иконки: Tabler Icons (MIT), outline. Толщина линии задаётся в CSS (.ic). -->
-  <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><symbol id="i-address-book" viewBox="0 0 24 24"><path d="M20 6v12a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2z" /> <path d="M10 16h6" /> <path d="M13 11m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M4 8h3" /> <path d="M4 12h3" /> <path d="M4 16h3" /></symbol><symbol id="i-alert-triangle" viewBox="0 0 24 24"><path d="M12 9v4" /> <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /> <path d="M12 16h.01" /></symbol><symbol id="i-archive" viewBox="0 0 24 24"><path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /> <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" /> <path d="M10 12l4 0" /></symbol><symbol id="i-arrow-back-up" viewBox="0 0 24 24"><path d="M9 14l-4 -4l4 -4" /> <path d="M5 10h11a4 4 0 1 1 0 8h-1" /></symbol><symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M5 12l14 0" /> <path d="M5 12l6 6" /> <path d="M5 12l6 -6" /></symbol><symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11" /></symbol><symbol id="i-calendar-event" viewBox="0 0 24 24"><path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /> <path d="M16 3l0 4" /> <path d="M8 3l0 4" /> <path d="M4 11l16 0" /> <path d="M8 15h2v2h-2z" /></symbol><symbol id="i-calendar-plus" viewBox="0 0 24 24"><path d="M12.5 21h-6.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v5" /> <path d="M16 3v4" /> <path d="M8 3v4" /> <path d="M4 11h16" /> <path d="M16 19h6" /> <path d="M19 16v6" /></symbol><symbol id="i-calendar-week" viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /> <path d="M16 3v4" /> <path d="M8 3v4" /> <path d="M4 11h16" /> <path d="M8 14v4" /> <path d="M12 14v4" /> <path d="M16 14v4" /></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /> <path d="M16 3v4" /> <path d="M8 3v4" /> <path d="M4 11h16" /> <path d="M11 15h1" /> <path d="M12 15v3" /></symbol><symbol id="i-cash" viewBox="0 0 24 24"><path d="M7 9m0 2a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z" /> <path d="M14 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M17 9v-2a2 2 0 0 0 -2 -2h-10a2 2 0 0 0 -2 2v6a2 2 0 0 0 2 2h2" /></symbol><symbol id="i-category-2" viewBox="0 0 24 24"><path d="M14 4h6v6h-6z" /> <path d="M4 14h6v6h-6z" /> <path d="M17 17m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /> <path d="M7 7m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5l10 -10" /></symbol><symbol id="i-checks" viewBox="0 0 24 24"><path d="M7 12l5 5l10 -10" /> <path d="M2 12l5 5m5 -5l5 -5" /></symbol><symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6l6 -6" /></symbol><symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M15 6l-6 6l6 6" /></symbol><symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 6l6 6l-6 6" /></symbol><symbol id="i-circle-check" viewBox="0 0 24 24"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M9 12l2 2l4 -4" /></symbol><symbol id="i-circle-x" viewBox="0 0 24 24"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M10 10l4 4m0 -4l-4 4" /></symbol><symbol id="i-clock" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 7v5l3 3" /></symbol><symbol id="i-cloud-off" viewBox="0 0 24 24"><path d="M9.58 5.548c.24 -.11 .492 -.207 .752 -.286c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.913 0 3.464 1.56 3.464 3.486c0 .957 -.383 1.824 -1.003 2.454m-2.997 1.033h-11.343c-2.572 -.004 -4.657 -2.011 -4.657 -4.487c0 -2.475 2.085 -4.482 4.657 -4.482c.13 -.582 .37 -1.128 .7 -1.62" /> <path d="M3 3l18 18" /></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M6.657 18c-2.572 0 -4.657 -2.007 -4.657 -4.483c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.913 0 3.464 1.56 3.464 3.486c0 1.927 -1.551 3.487 -3.465 3.487h-11.878" /></symbol><symbol id="i-coin" viewBox="0 0 24 24"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M14.8 9a2 2 0 0 0 -1.8 -1h-2a2 2 0 1 0 0 4h2a2 2 0 1 1 0 4h-2a2 2 0 0 1 -1.8 -1" /> <path d="M12 7v10" /></symbol><symbol id="i-copy" viewBox="0 0 24 24"><path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" /> <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" /></symbol><symbol id="i-credit-card" viewBox="0 0 24 24"><path d="M3 5m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z" /> <path d="M3 10l18 0" /> <path d="M7 15l.01 0" /> <path d="M11 15l2 0" /></symbol><symbol id="i-crown" viewBox="0 0 24 24"><path d="M12 6l4 6l5 -4l-2 10h-14l-2 -10l5 4z" /></symbol><symbol id="i-device-desktop" viewBox="0 0 24 24"><path d="M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10z" /> <path d="M7 20h10" /> <path d="M9 16v4" /> <path d="M15 16v4" /></symbol><symbol id="i-device-mobile" viewBox="0 0 24 24"><path d="M6 5a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2v-14z" /> <path d="M11 4h2" /> <path d="M12 17v.01" /></symbol><symbol id="i-discount" viewBox="0 0 24 24"><path d="M9 15l6 -6" /> <circle cx="9.5" cy="9.5" r=".5" fill="currentColor" /> <circle cx="14.5" cy="14.5" r=".5" fill="currentColor" /> <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></symbol><symbol id="i-dots" viewBox="0 0 24 24"><path d="M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /> <path d="M7 11l5 5l5 -5" /> <path d="M12 4l0 12" /></symbol><symbol id="i-eraser" viewBox="0 0 24 24"><path d="M19 20h-10.5l-4.21 -4.3a1 1 0 0 1 0 -1.41l10 -10a1 1 0 0 1 1.41 0l5 5a1 1 0 0 1 0 1.41l-9.2 9.3" /> <path d="M18 13.3l-6.3 -6.3" /></symbol><symbol id="i-file-import" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4" /> <path d="M5 13v-8a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-5.5m-9.5 -2h7m-3 -3l3 3l-3 3" /></symbol><symbol id="i-help-circle" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 16v.01" /> <path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" /></symbol><symbol id="i-home" viewBox="0 0 24 24"><path d="M5 12l-2 0l9 -9l9 9l-2 0" /> <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /> <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /></symbol><symbol id="i-info-circle" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 9h.01" /> <path d="M11 12h1v4h1" /></symbol><symbol id="i-layout-list" viewBox="0 0 24 24"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /> <path d="M4 14m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /></symbol><symbol id="i-lifebuoy" viewBox="0 0 24 24"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /> <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M15 15l3.35 3.35" /> <path d="M9 15l-3.35 3.35" /> <path d="M5.65 5.65l3.35 3.35" /> <path d="M18.35 5.65l-3.35 3.35" /></symbol><symbol id="i-lock" viewBox="0 0 24 24"><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z" /> <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /> <path d="M8 11v-4a4 4 0 1 1 8 0v4" /></symbol><symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" /> <path d="M9 12h12l-3 -3" /> <path d="M18 15l3 -3" /></symbol><symbol id="i-mail" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" /> <path d="M3 7l9 6l9 -6" /></symbol><symbol id="i-menu-2" viewBox="0 0 24 24"><path d="M4 6l16 0" /> <path d="M4 12l16 0" /> <path d="M4 18l16 0" /></symbol><symbol id="i-message-circle" viewBox="0 0 24 24"><path d="M3 20l1.3 -3.9c-2.324 -3.437 -1.426 -7.872 2.1 -10.374c3.526 -2.501 8.59 -2.296 11.845 .48c3.255 2.777 3.695 7.266 1.029 10.501c-2.666 3.235 -7.615 4.215 -11.574 2.293l-4.7 1" /></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></symbol><symbol id="i-note" viewBox="0 0 24 24"><path d="M13 20l7 -7" /> <path d="M13 20v-6a1 1 0 0 1 1 -1h6v-7a2 2 0 0 0 -2 -2h-12a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7" /></symbol><symbol id="i-notes" viewBox="0 0 24 24"><path d="M5 3m0 2a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z" /> <path d="M9 7l6 0" /> <path d="M9 11l6 0" /> <path d="M9 15l4 0" /></symbol><symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 21a9 9 0 0 1 0 -18c4.97 0 9 3.582 9 8c0 1.06 -.474 2.078 -1.318 2.828c-.844 .75 -1.989 1.172 -3.182 1.172h-2.5a2 2 0 0 0 -1 3.75a1.3 1.3 0 0 1 -1 2.25" /> <path d="M8.5 10.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M12.5 7.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M16.5 10.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" /> <path d="M13.5 6.5l4 4" /></symbol><symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2" /></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5l0 14" /> <path d="M5 12l14 0" /></symbol><symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2" /></symbol><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /> <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></symbol><symbol id="i-search" viewBox="0 0 24 24"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /> <path d="M21 21l-6 -6" /></symbol><symbol id="i-selector" viewBox="0 0 24 24"><path d="M8 9l4 -4l4 4" /> <path d="M16 15l-4 4l-4 -4" /></symbol><symbol id="i-settings" viewBox="0 0 24 24"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /> <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></symbol><symbol id="i-share" viewBox="0 0 24 24"><path d="M6 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /> <path d="M18 6m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /> <path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /> <path d="M8.7 10.7l6.6 -3.4" /> <path d="M8.7 13.3l6.6 3.4" /></symbol><symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z" /></symbol><symbol id="i-star" viewBox="0 0 24 24"><path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" /></symbol><symbol id="i-sun" viewBox="0 0 24 24"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /> <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></symbol><symbol id="i-ticket" viewBox="0 0 24 24"><path d="M15 5l0 2" /> <path d="M15 11l0 2" /> <path d="M15 17l0 2" /> <path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2" /></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7l16 0" /> <path d="M10 11l0 6" /> <path d="M14 11l0 6" /> <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /> <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></symbol><symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21l8 0" /> <path d="M12 17l0 4" /> <path d="M7 4l10 0" /> <path d="M17 4v8a5 5 0 0 1 -10 0v-8" /> <path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /> <path d="M7 9l5 -5l5 5" /> <path d="M12 4l0 12" /></symbol><symbol id="i-user-circle" viewBox="0 0 24 24"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M12 10m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /> <path d="M6.168 18.849a4 4 0 0 1 3.832 -2.849h4a4 4 0 0 1 3.834 2.855" /></symbol><symbol id="i-user-plus" viewBox="0 0 24 24"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /> <path d="M16 19h6" /> <path d="M19 16v6" /> <path d="M6 21v-2a4 4 0 0 1 4 -4h4" /></symbol><symbol id="i-user" viewBox="0 0 24 24"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /> <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></symbol><symbol id="i-users" viewBox="0 0 24 24"><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /> <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /> <path d="M16 3.13a4 4 0 0 1 0 7.75" /> <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" /></symbol><symbol id="i-wallet" viewBox="0 0 24 24"><path d="M17 8v-3a1 1 0 0 0 -1 -1h-10a2 2 0 0 0 0 4h12a1 1 0 0 1 1 1v3m0 4v3a1 1 0 0 1 -1 1h-12a2 2 0 0 1 -2 -2v-12" /> <path d="M20 12v4h-4a2 2 0 0 1 0 -4h4" /></symbol><symbol id="i-world" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M3.6 9h16.8" /> <path d="M3.6 15h16.8" /> <path d="M11.5 3a17 17 0 0 0 0 18" /> <path d="M12.5 3a17 17 0 0 1 0 18" /></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></symbol></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><symbol id="i-address-book" viewBox="0 0 24 24"><path d="M20 6v12a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2z" /> <path d="M10 16h6" /> <path d="M13 11m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M4 8h3" /> <path d="M4 12h3" /> <path d="M4 16h3" /></symbol><symbol id="i-alert-triangle" viewBox="0 0 24 24"><path d="M12 9v4" /> <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /> <path d="M12 16h.01" /></symbol><symbol id="i-archive" viewBox="0 0 24 24"><path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /> <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" /> <path d="M10 12l4 0" /></symbol><symbol id="i-arrow-back-up" viewBox="0 0 24 24"><path d="M9 14l-4 -4l4 -4" /> <path d="M5 10h11a4 4 0 1 1 0 8h-1" /></symbol><symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M5 12l14 0" /> <path d="M5 12l6 6" /> <path d="M5 12l6 -6" /></symbol><symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11" /></symbol><symbol id="i-calendar-event" viewBox="0 0 24 24"><path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /> <path d="M16 3l0 4" /> <path d="M8 3l0 4" /> <path d="M4 11l16 0" /> <path d="M8 15h2v2h-2z" /></symbol><symbol id="i-calendar-plus" viewBox="0 0 24 24"><path d="M12.5 21h-6.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v5" /> <path d="M16 3v4" /> <path d="M8 3v4" /> <path d="M4 11h16" /> <path d="M16 19h6" /> <path d="M19 16v6" /></symbol><symbol id="i-calendar-week" viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /> <path d="M16 3v4" /> <path d="M8 3v4" /> <path d="M4 11h16" /> <path d="M8 14v4" /> <path d="M12 14v4" /> <path d="M16 14v4" /></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /> <path d="M16 3v4" /> <path d="M8 3v4" /> <path d="M4 11h16" /> <path d="M11 15h1" /> <path d="M12 15v3" /></symbol><symbol id="i-cash" viewBox="0 0 24 24"><path d="M7 9m0 2a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z" /> <path d="M14 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M17 9v-2a2 2 0 0 0 -2 -2h-10a2 2 0 0 0 -2 2v6a2 2 0 0 0 2 2h2" /></symbol><symbol id="i-category-2" viewBox="0 0 24 24"><path d="M14 4h6v6h-6z" /> <path d="M4 14h6v6h-6z" /> <path d="M17 17m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /> <path d="M7 7m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /></symbol><symbol id="i-chart-bar" viewBox="0 0 24 24"><path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /> <path d="M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /> <path d="M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /> <path d="M4 20h14" /></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5l10 -10" /></symbol><symbol id="i-checks" viewBox="0 0 24 24"><path d="M7 12l5 5l10 -10" /> <path d="M2 12l5 5m5 -5l5 -5" /></symbol><symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6l6 -6" /></symbol><symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M15 6l-6 6l6 6" /></symbol><symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 6l6 6l-6 6" /></symbol><symbol id="i-circle-check" viewBox="0 0 24 24"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M9 12l2 2l4 -4" /></symbol><symbol id="i-circle-x" viewBox="0 0 24 24"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M10 10l4 4m0 -4l-4 4" /></symbol><symbol id="i-clock" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 7v5l3 3" /></symbol><symbol id="i-cloud-off" viewBox="0 0 24 24"><path d="M9.58 5.548c.24 -.11 .492 -.207 .752 -.286c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.913 0 3.464 1.56 3.464 3.486c0 .957 -.383 1.824 -1.003 2.454m-2.997 1.033h-11.343c-2.572 -.004 -4.657 -2.011 -4.657 -4.487c0 -2.475 2.085 -4.482 4.657 -4.482c.13 -.582 .37 -1.128 .7 -1.62" /> <path d="M3 3l18 18" /></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M6.657 18c-2.572 0 -4.657 -2.007 -4.657 -4.483c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.913 0 3.464 1.56 3.464 3.486c0 1.927 -1.551 3.487 -3.465 3.487h-11.878" /></symbol><symbol id="i-coin" viewBox="0 0 24 24"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M14.8 9a2 2 0 0 0 -1.8 -1h-2a2 2 0 1 0 0 4h2a2 2 0 1 1 0 4h-2a2 2 0 0 1 -1.8 -1" /> <path d="M12 7v10" /></symbol><symbol id="i-copy" viewBox="0 0 24 24"><path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" /> <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" /></symbol><symbol id="i-credit-card" viewBox="0 0 24 24"><path d="M3 5m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z" /> <path d="M3 10l18 0" /> <path d="M7 15l.01 0" /> <path d="M11 15l2 0" /></symbol><symbol id="i-crown" viewBox="0 0 24 24"><path d="M12 6l4 6l5 -4l-2 10h-14l-2 -10l5 4z" /></symbol><symbol id="i-device-desktop" viewBox="0 0 24 24"><path d="M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10z" /> <path d="M7 20h10" /> <path d="M9 16v4" /> <path d="M15 16v4" /></symbol><symbol id="i-device-mobile" viewBox="0 0 24 24"><path d="M6 5a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2v-14z" /> <path d="M11 4h2" /> <path d="M12 17v.01" /></symbol><symbol id="i-discount" viewBox="0 0 24 24"><path d="M9 15l6 -6" /> <circle cx="9.5" cy="9.5" r=".5" fill="currentColor" /> <circle cx="14.5" cy="14.5" r=".5" fill="currentColor" /> <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></symbol><symbol id="i-dots" viewBox="0 0 24 24"><path d="M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /> <path d="M7 11l5 5l5 -5" /> <path d="M12 4l0 12" /></symbol><symbol id="i-eraser" viewBox="0 0 24 24"><path d="M19 20h-10.5l-4.21 -4.3a1 1 0 0 1 0 -1.41l10 -10a1 1 0 0 1 1.41 0l5 5a1 1 0 0 1 0 1.41l-9.2 9.3" /> <path d="M18 13.3l-6.3 -6.3" /></symbol><symbol id="i-file-import" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4" /> <path d="M5 13v-8a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-5.5m-9.5 -2h7m-3 -3l3 3l-3 3" /></symbol><symbol id="i-help-circle" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 16v.01" /> <path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" /></symbol><symbol id="i-home" viewBox="0 0 24 24"><path d="M5 12l-2 0l9 -9l9 9l-2 0" /> <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /> <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /></symbol><symbol id="i-info-circle" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 9h.01" /> <path d="M11 12h1v4h1" /></symbol><symbol id="i-layout-list" viewBox="0 0 24 24"><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /> <path d="M4 14m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /></symbol><symbol id="i-lifebuoy" viewBox="0 0 24 24"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /> <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M15 15l3.35 3.35" /> <path d="M9 15l-3.35 3.35" /> <path d="M5.65 5.65l3.35 3.35" /> <path d="M18.35 5.65l-3.35 3.35" /></symbol><symbol id="i-lock" viewBox="0 0 24 24"><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z" /> <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /> <path d="M8 11v-4a4 4 0 1 1 8 0v4" /></symbol><symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" /> <path d="M9 12h12l-3 -3" /> <path d="M18 15l3 -3" /></symbol><symbol id="i-mail" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" /> <path d="M3 7l9 6l9 -6" /></symbol><symbol id="i-menu-2" viewBox="0 0 24 24"><path d="M4 6l16 0" /> <path d="M4 12l16 0" /> <path d="M4 18l16 0" /></symbol><symbol id="i-message-circle" viewBox="0 0 24 24"><path d="M3 20l1.3 -3.9c-2.324 -3.437 -1.426 -7.872 2.1 -10.374c3.526 -2.501 8.59 -2.296 11.845 .48c3.255 2.777 3.695 7.266 1.029 10.501c-2.666 3.235 -7.615 4.215 -11.574 2.293l-4.7 1" /></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></symbol><symbol id="i-note" viewBox="0 0 24 24"><path d="M13 20l7 -7" /> <path d="M13 20v-6a1 1 0 0 1 1 -1h6v-7a2 2 0 0 0 -2 -2h-12a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7" /></symbol><symbol id="i-notes" viewBox="0 0 24 24"><path d="M5 3m0 2a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z" /> <path d="M9 7l6 0" /> <path d="M9 11l6 0" /> <path d="M9 15l4 0" /></symbol><symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 21a9 9 0 0 1 0 -18c4.97 0 9 3.582 9 8c0 1.06 -.474 2.078 -1.318 2.828c-.844 .75 -1.989 1.172 -3.182 1.172h-2.5a2 2 0 0 0 -1 3.75a1.3 1.3 0 0 1 -1 2.25" /> <path d="M8.5 10.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M12.5 7.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /> <path d="M16.5 10.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" /> <path d="M13.5 6.5l4 4" /></symbol><symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2" /></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5l0 14" /> <path d="M5 12l14 0" /></symbol><symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2" /></symbol><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /> <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></symbol><symbol id="i-search" viewBox="0 0 24 24"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /> <path d="M21 21l-6 -6" /></symbol><symbol id="i-selector" viewBox="0 0 24 24"><path d="M8 9l4 -4l4 4" /> <path d="M16 15l-4 4l-4 -4" /></symbol><symbol id="i-settings" viewBox="0 0 24 24"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /> <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></symbol><symbol id="i-share" viewBox="0 0 24 24"><path d="M6 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /> <path d="M18 6m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /> <path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /> <path d="M8.7 10.7l6.6 -3.4" /> <path d="M8.7 13.3l6.6 3.4" /></symbol><symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z" /></symbol><symbol id="i-star" viewBox="0 0 24 24"><path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" /></symbol><symbol id="i-sun" viewBox="0 0 24 24"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /> <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></symbol><symbol id="i-ticket" viewBox="0 0 24 24"><path d="M15 5l0 2" /> <path d="M15 11l0 2" /> <path d="M15 17l0 2" /> <path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2" /></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7l16 0" /> <path d="M10 11l0 6" /> <path d="M14 11l0 6" /> <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /> <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></symbol><symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21l8 0" /> <path d="M12 17l0 4" /> <path d="M7 4l10 0" /> <path d="M17 4v8a5 5 0 0 1 -10 0v-8" /> <path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /> <path d="M7 9l5 -5l5 5" /> <path d="M12 4l0 12" /></symbol><symbol id="i-user-circle" viewBox="0 0 24 24"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M12 10m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /> <path d="M6.168 18.849a4 4 0 0 1 3.832 -2.849h4a4 4 0 0 1 3.834 2.855" /></symbol><symbol id="i-user-plus" viewBox="0 0 24 24"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /> <path d="M16 19h6" /> <path d="M19 16v6" /> <path d="M6 21v-2a4 4 0 0 1 4 -4h4" /></symbol><symbol id="i-user" viewBox="0 0 24 24"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /> <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></symbol><symbol id="i-users" viewBox="0 0 24 24"><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /> <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /> <path d="M16 3.13a4 4 0 0 1 0 7.75" /> <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" /></symbol><symbol id="i-wallet" viewBox="0 0 24 24"><path d="M17 8v-3a1 1 0 0 0 -1 -1h-10a2 2 0 0 0 0 4h12a1 1 0 0 1 1 1v3m0 4v3a1 1 0 0 1 -1 1h-12a2 2 0 0 1 -2 -2v-12" /> <path d="M20 12v4h-4a2 2 0 0 1 0 -4h4" /></symbol><symbol id="i-world" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M3.6 9h16.8" /> <path d="M3.6 15h16.8" /> <path d="M11.5 3a17 17 0 0 0 0 18" /> <path d="M12.5 3a17 17 0 0 1 0 18" /></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></symbol></svg>
   
   <!-- Выбор контактов телефона (свой список, без зависимости от окна системы) -->
   <div class="modal-overlay" id="moneyDetailModal">
@@ -2552,6 +2671,7 @@
       <div class="settings-tabs-bar">
         <div class="seg-toggle settings-tabs" id="settingsTabs">
           <button type="button" class="seg-btn active" data-action="settings-tab" data-settings-tab="account">Аккаунт</button>
+          <button type="button" class="seg-btn" data-action="settings-tab" data-settings-tab="stats">Статистика</button>
           <button type="button" class="seg-btn" data-action="settings-tab" data-settings-tab="look">Оформление</button>
           <button type="button" class="seg-btn" data-action="settings-tab" data-settings-tab="data">Данные</button>
         </div>
@@ -2607,6 +2727,16 @@
         <button type="button" class="btn btn-secondary btn-block btn-sm" data-action="feedback-open"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>Написать разработчику</button>
         <p class="text-sm text-muted" style="margin-top:8px;font-size:0.72rem;">Что-то не работает, потерялись данные или не хватает возможности — напишите. Ответ придёт на почту, которую вы укажете.</p>
       </div>
+      </div>
+
+      <div class="settings-group" data-settings-group="stats">
+        <div class="stats-bar">
+          <div class="seg-toggle stats-range" id="statsRange">
+            <button type="button" class="seg-btn active" data-stats-range="week">Неделя</button>
+            <button type="button" class="seg-btn" data-stats-range="month">Месяц</button>
+          </div>
+        </div>
+        <div class="stats-grid" id="statsGrid"></div>
       </div>
 
       <div class="settings-group" data-settings-group="look">
@@ -3234,7 +3364,7 @@
                 подсчёт денег, оплата, …).
        МИНОР  — мелкие доработки; ПОДНИМАТЬ на 1 при КАЖДОЙ новой выкладке.
        В интерфейсе называется «версия», не «сборка». */
-    BUILD: '0.4.19',
+    BUILD: '0.4.20',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -4329,6 +4459,20 @@
     'абонемент': 'pass',
     'Ждут оплаты': 'Awaiting payment',
     'все оплатили': 'all paid',
+    'Статистика': 'Stats',
+    'Неделя': 'Week',
+    'Количество занятий': 'Number of classes',
+    'к прошлой неделе': 'vs last week',
+    'к прошлому месяцу': 'vs last month',
+    'к тому же дню прошлой недели': 'vs same day last week',
+    'к тому же числу прошлого месяца': 'vs same date last month',
+    'в среднем': 'average',
+    'Статистика появится, когда в расписании будут занятия': 'Stats will appear once you have classes in the schedule',
+    'проведено': 'done',
+    'впереди': 'ahead',
+    'средний чек': 'average payment',
+    'эта неделя': 'this week',
+    'этот месяц': 'this month',
     'Без клиентов': 'No clients',
     'Свободный день': 'Free day',
     'следующее в': 'next at',
@@ -13334,41 +13478,8 @@
           '<div class="hero-bar"><span style="width:100%"></span></div></div>';
       }
 
-      // Плитки: деньги месяца по неделям и долги за месяц
+      // Должники месяца (на ПК — список под карточкой)
       var key = Domain.currentMonthKey();
-      var total = 0, wk = [0, 0, 0, 0, 0];
-      function add(rw) {
-        var d = parseInt(String(rw.date || '').slice(8, 10), 10);
-        if (!d) return;
-        wk[Math.min(4, Math.floor((d - 1) / 7))] += rw.amount || 0;
-      }
-      try {
-        total = (Services.monthMoney(key) || {}).total || 0;
-        Services.lessonPaymentsForMonth(key).forEach(add);
-        Services.abonementSalesForMonth(key).forEach(add);
-        Services.extraIncomesForMonth(key).forEach(add);
-      } catch (e) {}
-      var max = Math.max.apply(null, wk) || 1;
-      var curW = Math.min(4, Math.floor((now.getDate() - 1) / 7));
-      var bars = wk.map(function (v, i) {
-        return '<i class="' + (i === curW ? 'on' : '') + '" style="height:' + Math.max(12, Math.round(v / max * 100)) + '%"></i>';
-      }).join('');
-      var debts = 0;
-      State.classes.forEach(function (c) {
-        if (c.clubGroupId || String(c.date).slice(0, 7) !== key || c.date > today) return;
-        (c.clientIds || []).forEach(function (id) {
-          if (!(c.payments && c.payments[id]) && State.clientById(id)) debts++;
-        });
-      });
-      var month = Domain.monthLabelSoft ? Domain.monthLabelSoft(key) : key;
-      month = String(month).charAt(0).toUpperCase() + String(month).slice(1);
-      html += '<div class="day-tiles">' +
-        '<button type="button" class="tile" data-tab-go="clients"><div class="tile-k">' + esc(month) + '</div>' +
-          '<div class="tile-v">' + UI.formatMoney(total) + '</div><div class="tile-bars">' + bars + '</div></button>' +
-        '<div class="tile"><div class="tile-k">' + I18N.t('Ждут оплаты') + '</div>' +
-          '<div class="tile-v' + (debts ? ' is-warn' : '') + '">' + debts + '</div>' +
-          '<div class="tile-m">' + (debts ? I18N.t('за месяц') : I18N.t('все оплатили')) + '</div></div>' +
-      '</div>';
       var owe = {};
       State.classes.forEach(function (c) {
         if (c.clubGroupId || String(c.date).slice(0, 7) !== key || c.date > today) return;
@@ -13616,6 +13727,556 @@
         }).observe(sentinel);
       }
     } catch (e) {}
+  })();
+
+
+  /* ═══ next.html: статистика и слой движения ═══════════════════════
+     Статистика — вкладка в Настройках: доход и число занятий столбцами
+     по неделям или месяцам. Движение — обёртки поверх готовых render*:
+     бегунки под переключателями, карточки разделов по очереди,
+     перестановки в списках (FLIP), смена темы кругом. */
+  (function nextPolish() {
+    var reduce = false;
+    try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    var EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
+    var isDesk = function () { return document.documentElement.getAttribute('data-device') === 'desktop'; };
+    function anim(el, frames, opts) {
+      if (reduce || !el || !el.animate) return null;
+      try { return el.animate(frames, opts); } catch (e) { return null; }
+    }
+    function visible(el) { return !!(el && el.offsetParent !== null); }
+
+    /* Карточки входят по очереди: снизу, с лёгким растворением */
+    function stagger(items, o) {
+      o = o || {};
+      var dx = o.dx || 0, dy = o.dy == null ? 10 : o.dy;
+      var n = 0;
+      for (var i = 0; i < items.length && n < (o.max || 12); i++) {
+        var el = items[i];
+        if (!visible(el)) continue;
+        anim(el, [
+          { opacity: 0, transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + (o.scale || 1) + ')' },
+          { opacity: 1, transform: 'none' }
+        ], { duration: o.dur || 360, delay: (o.delay || 0) + n * (o.step || 34), easing: EASE, fill: 'backwards' });
+        n++;
+      }
+    }
+
+    /* Число докручивается до нового значения */
+    function countTo(el, to, fmt, from) {
+      if (!el) return;
+      fmt = fmt || String;
+      if (reduce) { el.textContent = fmt(to); return; }
+      if (from == null) from = el._val == null ? 0 : el._val;
+      el._val = to;
+      if (from === to) { el.textContent = fmt(to); return; }
+      var t0 = performance.now(), dur = 620, id = (el._cid = (el._cid || 0) + 1);
+      (function step(t) {
+        if (id !== el._cid) return;
+        var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 4);
+        el.textContent = fmt(Math.round(from + (to - from) * e));
+        if (p < 1) requestAnimationFrame(step);
+      })(t0);
+    }
+
+    /* ── Бегунок под активным сегментом ─────────────────────────────── */
+    function placeThumb(box, instant) {
+      var th = box._thumb, a = box.querySelector('.seg-btn.active');
+      if (!th) return;
+      if (!a || !a.offsetWidth) { th.style.opacity = a ? '' : '0'; return; }
+      if (instant || !box._placed) th.classList.add('no-anim');
+      th.style.opacity = '';
+      th.style.width = a.offsetWidth + 'px';
+      th.style.height = a.offsetHeight + 'px';
+      th.style.transform = 'translate(' + a.offsetLeft + 'px,' + a.offsetTop + 'px)';
+      if (th.classList.contains('no-anim')) { void th.offsetWidth; th.classList.remove('no-anim'); }
+      box._placed = true;
+    }
+    function initThumb(box) {
+      if (box._thumb) return;
+      var th = document.createElement('span');
+      th.className = 'seg-thumb'; th.setAttribute('aria-hidden', 'true');
+      box.insertBefore(th, box.firstChild);
+      box._thumb = th;
+      box.classList.add('has-thumb');
+      placeThumb(box, true);
+      if ('ResizeObserver' in window) new ResizeObserver(function () { placeThumb(box, true); }).observe(box);
+    }
+
+    /* ── Подложка под активным пунктом меню ─────────────────────────── */
+    var nav = document.getElementById('bottomNav');
+    var pill = null;
+    function placePill(instant) {
+      if (!pill) return;
+      var a = nav.querySelector('.nav-item.active');
+      if (!a || !a.offsetWidth) { pill.style.opacity = '0'; return; }
+      var w = a.offsetWidth, h = a.offsetHeight, x = a.offsetLeft, y = a.offsetTop;
+      if (!isDesk()) { var pw = Math.min(w - 8, 64); x += (w - pw) / 2; w = pw; h = 34; y += 8; }
+      if (instant || !pill._placed) pill.classList.add('no-anim');
+      pill.style.opacity = '';
+      pill.style.width = w + 'px'; pill.style.height = h + 'px';
+      pill.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+      if (pill.classList.contains('no-anim')) { void pill.offsetWidth; pill.classList.remove('no-anim'); }
+      pill._placed = true;
+    }
+    if (nav) {
+      pill = document.createElement('span');
+      pill.className = 'nav-pill'; pill.setAttribute('aria-hidden', 'true');
+      nav.insertBefore(pill, nav.firstChild);
+      nav.classList.add('has-pill');
+      if ('ResizeObserver' in window) new ResizeObserver(function () { placePill(true); }).observe(nav);
+    }
+
+    /* Любая смена .active у сегментов и пунктов меню двигает бегунок */
+    new MutationObserver(function (recs) {
+      var boxes = [], navMoved = false;
+      recs.forEach(function (r) {
+        var t = r.target;
+        if (t.classList && t.classList.contains('seg-btn')) {
+          var b = t.closest('.seg-toggle');
+          if (b && boxes.indexOf(b) < 0) boxes.push(b);
+        } else if (t.classList && t.classList.contains('nav-item')) navMoved = true;
+        else if (r.type === 'childList') {
+          r.addedNodes.forEach(function (n) {
+            if (n.nodeType !== 1) return;
+            if (n.matches && n.matches('.seg-toggle')) initThumb(n);
+            if (n.querySelectorAll) n.querySelectorAll('.seg-toggle').forEach(initThumb);
+          });
+        }
+      });
+      boxes.forEach(function (b) { if (b._thumb) placeThumb(b); else initThumb(b); });
+      if (navMoved) placePill(false);
+    }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'], childList: true });
+    document.querySelectorAll('.seg-toggle').forEach(initThumb);
+
+    /* ── Смена раздела ───────────────────────────────────────────────── */
+    var ORDER = ['schedule', 'clients', 'club', 'settings'];
+    var curTab = null, tabAt = 0;
+    var LIST_ITEMS = '#clientsList > *, #clubGroupsList > *, #clubMembersList > *, #weekBoard > .wb-col, #dayClasses .time-class, #dayClasses > .empty';
+    function enterSection(sec, dir) {
+      if (!sec) return;
+      var kids = Array.prototype.filter.call(sec.children, function (k) {
+        return !k.classList.contains('hidden') && !k.matches('#clientsList, #clubGroupsList, #clubMembersList, #weekBoard, #dayClasses, .settings-body, .settings-tabs-bar');
+      });
+      var items = kids.slice();
+      sec.querySelectorAll(LIST_ITEMS).forEach(function (el) { items.push(el); });
+      items.sort(function (a, b) { return a.getBoundingClientRect().top - b.getBoundingClientRect().top || a.getBoundingClientRect().left - b.getBoundingClientRect().left; });
+      stagger(items, { dx: dir * 14, dy: 8, dur: 380, step: 30, max: 14 });
+    }
+    var switchTab = UI.switchTab;
+    UI.switchTab = function (tab) {
+      var prev = curTab;
+      tabAt = performance.now();
+      switchTab.apply(UI, arguments);
+      curTab = tab; tabAt = performance.now();
+      if (prev === tab) return;
+      var dir = prev ? (ORDER.indexOf(tab) > ORDER.indexOf(prev) ? 1 : -1) : 0;
+      var sec = document.querySelector('.section[data-screen="' + tab + '"]');
+      if (tab === 'settings') {
+        var g = document.querySelector('.settings-group.active');
+        stagger([document.querySelector('.settings-tabs-bar')], { dy: 6, dur: 300 });
+        if (g) enterGroup(g, dir, 40);
+      } else enterSection(sec, dir);
+      var it = nav && nav.querySelector('.nav-item.active');
+      if (it && prev && !reduce) { it.classList.remove('is-pop'); void it.offsetWidth; it.classList.add('is-pop'); }
+      if (tab === 'clients') {
+        document.querySelectorAll('#section-clients .stat-value').forEach(function (el) {
+          var v = parseInt(el.textContent, 10);
+          if (!isNaN(v)) countTo(el, v, String, 0);
+        });
+      }
+    };
+
+    /* ── Вкладки настроек: в сторону нажатой ─────────────────────────── */
+    var SORDER = ['account', 'stats', 'look', 'data'];
+    function enterGroup(g, dir, delay) {
+      var items = Array.prototype.filter.call(g.children, function (k) { return !k.classList.contains('hidden'); });
+      if (g.dataset.settingsGroup === 'stats') return; // у статистики свой вход
+      stagger(items, { dx: dir * 18, dy: dir ? 0 : 8, dur: 360, step: 32, max: 10, delay: delay || 0 });
+    }
+    var switchSettingsTab = UI.switchSettingsTab;
+    UI.switchSettingsTab = function (name, byUser) {
+      var prev = State.settingsTab;
+      switchSettingsTab.apply(UI, arguments);
+      if (name === 'stats') Stats.render(true);
+      if (byUser && prev !== name) {
+        var g = document.querySelector('.settings-group[data-settings-group="' + name + '"]');
+        var dir = SORDER.indexOf(name) > SORDER.indexOf(prev) ? 1 : -1;
+        if (g) enterGroup(g, dir, 0);
+      }
+    };
+
+    /* ── Перестановки в списках (FLIP) ───────────────────────────────── */
+    function snap(box, sel) {
+      var map = {};
+      if (!box) return map;
+      var base = box.getBoundingClientRect();
+      box.querySelectorAll(sel).forEach(function (el) {
+        var id = el.dataset.id;
+        if (!id || map[id]) return;
+        var r = el.getBoundingClientRect();
+        map[id] = { el: el, top: r.top, left: r.left, w: r.width, h: r.height, rt: r.top - base.top, rl: r.left - base.left, html: el.innerHTML, cls: el.className };
+      });
+      return map;
+    }
+    function flip(box, sel, before) {
+      if (reduce || !box || !visible(box)) return;
+      var after = snap(box, sel);
+      var hadAny = Object.keys(before).length > 0;
+      if (!hadAny) return;
+      var n = 0;
+      Object.keys(after).forEach(function (id) {
+        var a = after[id], b = before[id];
+        if (!b) {
+          anim(a.el, [{ opacity: 0, transform: 'scale(0.94) translateY(6px)' }, { opacity: 1, transform: 'none' }],
+            { duration: 380, delay: 60 + 30 * n++, easing: EASE, fill: 'backwards' });
+          return;
+        }
+        var dx = b.left - a.left, dy = b.top - a.top;
+        if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+          anim(a.el, [{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'none' }], { duration: 420, easing: EASE });
+        } else if (b.html !== a.el.innerHTML || b.cls !== a.el.className) {
+          anim(a.el, [{ transform: 'scale(0.97)', filter: 'brightness(1.25)' }, { transform: 'none', filter: 'none' }], { duration: 360, easing: EASE });
+        }
+      });
+      /* Ушедшие — призраком на старом месте, тают и съёживаются */
+      Object.keys(before).forEach(function (id) {
+        if (after[id]) return;
+        var b = before[id];
+        var g = b.el.cloneNode(true);
+        var base = box.getBoundingClientRect();
+        if (getComputedStyle(box).position === 'static') box.style.position = 'relative';
+        g.removeAttribute('data-action'); g.removeAttribute('data-id');
+        g.setAttribute('aria-hidden', 'true');
+        g.style.cssText += ';position:absolute;margin:0;pointer-events:none;z-index:5;top:' + (b.top - base.top) + 'px;left:' + (b.left - base.left) + 'px;width:' + b.w + 'px;height:' + b.h + 'px;';
+        box.appendChild(g);
+        var a = anim(g, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(0.92)' }], { duration: 260, easing: EASE, fill: 'forwards' });
+        if (a) a.onfinish = function () { g.remove(); }; else g.remove();
+      });
+    }
+    function wrapFlip(name, pairs, when) {
+      var orig = UI[name];
+      if (typeof orig !== 'function') return;
+      UI[name] = function () {
+        var ok = !reduce && performance.now() - tabAt > 120 && (!when || when());
+        var snaps = ok ? pairs.map(function (p) { return snap(document.querySelector(p[0]), p[1]); }) : null;
+        var r = orig.apply(UI, arguments);
+        if (ok) pairs.forEach(function (p, i) { flip(document.querySelector(p[0]), p[1], snaps[i]); });
+        return r;
+      };
+    }
+    var lastDay = State.selectedDate;
+    wrapFlip('renderDayClasses', [['#dayClasses', '.time-class[data-id]']], function () {
+      var same = State.selectedDate === lastDay;
+      lastDay = State.selectedDate;
+      return same;
+    });
+    var lastWeek = null;
+    wrapFlip('renderWeekBoard', [['#weekBoard', '.wb-ev[data-id]']], function () {
+      var w = String(State.currentWeekStart);
+      var same = w === lastWeek;
+      lastWeek = w;
+      return same;
+    });
+    wrapFlip('renderClients', [['#clientsList', '[data-id]']]);
+    wrapFlip('renderClub', [['#clubGroupsList', '[data-id]'], ['#clubMembersList', '[data-id]']]);
+
+    /* ── Листание недели: дни уезжают в сторону листания ─────────────── */
+    var weekKey = String(State.currentWeekStart);
+    var renderSchedule = UI.renderSchedule;
+    UI.renderSchedule = function () {
+      var before = weekKey;
+      var r = renderSchedule.apply(UI, arguments);
+      weekKey = String(State.currentWeekStart);
+      if (before && weekKey !== before && performance.now() - tabAt > 120) {
+        var dir = new Date(State.currentWeekStart) > new Date(before) ? 1 : -1;
+        var items = [];
+        document.querySelectorAll('#weekDays > *, #weekBoard > .wb-col').forEach(function (el) { items.push(el); });
+        stagger(items, { dx: dir * 22, dy: 0, dur: 360, step: 22, max: 14 });
+        var t = UI.$('periodTitle');
+        anim(t, [{ opacity: 0, filter: 'blur(4px)', transform: 'translateX(' + dir * 10 + 'px)' }, { opacity: 1, filter: 'none', transform: 'none' }], { duration: 300, easing: EASE });
+      }
+      return r;
+    };
+
+    /* ── Заголовок в шапке меняется растворением, а не подменой ──────── */
+    var upd = UI.updateHeaderTitle;
+    UI.updateHeaderTitle = function () {
+      var el = UI.$('appSubtitle'), was = el ? el.textContent : '';
+      var r = upd.apply(UI, arguments);
+      if (el && was && el.textContent !== was) {
+        anim(el, [{ opacity: 0, filter: 'blur(5px)', transform: 'translateY(5px)' }, { opacity: 1, filter: 'none', transform: 'none' }], { duration: 340, easing: EASE });
+      }
+      return r;
+    };
+
+    /* ── Окна: содержимое догоняет шторку ────────────────────────────── */
+    var openModal = UI.openModal;
+    UI.openModal = function (id) {
+      var r = openModal.apply(UI, arguments);
+      var m = document.querySelector('#' + id + ' > .modal');
+      if (m) {
+        var items = Array.prototype.filter.call(m.querySelectorAll(':scope > *:not(.modal-header), :scope > form > *'), function (k) {
+          return k.tagName !== 'FORM' && !k.classList.contains('hidden');
+        });
+        stagger(items, { dy: 14, dur: 420, step: 28, max: 10, delay: 70 });
+      }
+      return r;
+    };
+
+    /* ── Отметка оплаты: щелчок + кнопка «Оплачено» оживает ──────────── */
+    document.addEventListener('change', function (e) {
+      var t = e.target;
+      if (t && t.type === 'checkbox') {
+        t.classList.remove('is-tick'); void t.offsetWidth;
+        if (t.checked) t.classList.add('is-tick');
+      }
+    }, true);
+    document.addEventListener('click', function (e) {
+      var pay = e.target.closest && e.target.closest('[data-hero-pay]');
+      if (!pay) return;
+      var cid = pay.dataset.class;
+      setTimeout(function () {
+        var b = document.querySelector('[data-hero-pay][data-class="' + cid + '"]');
+        if (!b) return;
+        anim(b, [{ transform: 'scale(0.86)' }, { transform: 'scale(1.06)', offset: 0.55 }, { transform: 'none' }], { duration: 420, easing: EASE });
+        var ic = b.querySelector('.ic');
+        anim(ic, [{ opacity: 0, transform: 'scale(0.4) rotate(-30deg)' }, { opacity: 1, transform: 'none' }], { duration: 360, delay: 60, easing: EASE, fill: 'backwards' });
+      }, 0);
+    }, true);
+
+    /* ── Смена темы и цвета: новая раскрывается кругом от пальца ─────── */
+    var themeTap = null;
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-theme-pick], [data-action="set-color"], [data-action="style-pick"]');
+      themeTap = b ? { x: e.clientX, y: e.clientY, t: performance.now() } : null;
+    }, true);
+    var applyTheme = UI.applyTheme;
+    UI.applyTheme = function () {
+      var self = this, args = arguments;
+      var tap = themeTap;
+      themeTap = null;
+      if (reduce || !tap || performance.now() - tap.t > 400 || !document.startViewTransition) return applyTheme.apply(self, args);
+      var r;
+      var vt = document.startViewTransition(function () {
+        r = applyTheme.apply(self, args);
+        requestAnimationFrame(function () { document.querySelectorAll('.seg-toggle').forEach(function (b) { placeThumb(b, true); }); placePill(true); });
+      });
+      var rad = Math.hypot(Math.max(tap.x, innerWidth - tap.x), Math.max(tap.y, innerHeight - tap.y));
+      vt.ready.then(function () {
+        document.documentElement.animate(
+          { clipPath: ['circle(0px at ' + tap.x + 'px ' + tap.y + 'px)', 'circle(' + rad + 'px at ' + tap.x + 'px ' + tap.y + 'px)'] },
+          { duration: 560, easing: 'cubic-bezier(0.77, 0, 0.175, 1)', pseudoElement: '::view-transition-new(root)' });
+      }).catch(function () {});
+      return r;
+    };
+
+    /* ═══ Статистика ═════════════════════════════════════════════════ */
+    var Stats = {
+      range: 'week',
+      sel: null,      // индекс выбранного столбца, общий для обеих карточек
+      data: null,
+      count: function () { return isDesk() ? 12 : (this.range === 'week' ? 8 : 6); },
+      locale: function () { try { return I18N.locale(); } catch (e) { return 'ru-RU'; } },
+      periods: function () {
+        var n = this.count(), out = [], i, today = Domain.formatDate(new Date());
+        var mon3 = function (d, loc) { return d.toLocaleDateString(loc, { month: 'short' }).replace('.', '').slice(0, 3); };
+        if (this.range === 'week') {
+          var mon = Domain.getMonday(new Date()), lastM = -1;
+          for (i = n - 1; i >= 0; i--) {
+            var s = Domain.addDays(mon, -7 * i), days = [];
+            for (var d = 0; d < 7; d++) days.push(Domain.formatDate(Domain.addDays(s, d)));
+            var e = Domain.addDays(s, 6);
+            /* Подпись короткая: число, а месяц — только там, где он сменился */
+            var lab = s.getMonth() !== lastM ? s.getDate() + ' ' + mon3(s, this.locale()) : String(s.getDate());
+            lastM = s.getMonth();
+            out.push({
+              days: days, cur: i === 0, lab: lab,
+              name: i === 0 ? I18N.t('эта неделя') : s.getDate() + (s.getMonth() !== e.getMonth() ? ' ' + s.toLocaleDateString(this.locale(), { month: 'short' }).replace('.', '') : '') + ' – ' + e.getDate() + ' ' + e.toLocaleDateString(this.locale(), { month: 'short' }).replace('.', '')
+            });
+          }
+        } else {
+          var now = new Date();
+          for (i = n - 1; i >= 0; i--) {
+            var m = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            var key = m.getFullYear() + '-' + String(m.getMonth() + 1).padStart(2, '0');
+            var nm = m.toLocaleDateString(this.locale(), { month: 'long' });
+            out.push({
+              key: key, cur: i === 0,
+              lab: mon3(m, this.locale()),
+              name: i === 0 ? I18N.t('этот месяц') : nm.charAt(0).toUpperCase() + nm.slice(1) + (m.getFullYear() !== now.getFullYear() ? ' ' + m.getFullYear() : '')
+            });
+          }
+        }
+        return { list: out, today: today };
+      },
+      compute: function () {
+        var P = this.periods(), today = P.today;
+        var nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+        var byDate = {};
+        State.classes.forEach(function (c) { if (c.date) (byDate[c.date] = byDate[c.date] || []).push(c); });
+        P.list.forEach(function (p) {
+          var cls = [];
+          if (p.days) {
+            p.income = 0; p.pays = 0;
+            p.days.forEach(function (d) {
+              var dm = Services.dayMoney(d);
+              p.income += dm.total; p.pays += dm.people;
+              cls = cls.concat(byDate[d] || []);
+            });
+          } else {
+            var mm = Services.monthMoney(p.key) || {};
+            p.income = mm.total || 0; p.pays = mm.people || 0;
+            Object.keys(byDate).forEach(function (d) { if (d.slice(0, 7) === p.key) cls = cls.concat(byDate[d]); });
+          }
+          p.lessons = cls.length;
+          p.ahead = cls.filter(function (c) {
+            return c.date > today || (c.date === today && Domain.timeToMinutes(c.time) + (c.duration || 60) > nowMin);
+          }).length;
+          var ppl = {};
+          cls.forEach(function (c) { (c.clientIds || []).forEach(function (id) { ppl[id] = 1; }); });
+          p.people = Object.keys(ppl).length;
+        });
+        /* Текущий период ещё не кончился: доход сравниваем с прошлым
+           периодом на тот же день, иначе в понедельник всегда «−90%». */
+        var L = P.list, cur = L[L.length - 1], pr = L[L.length - 2];
+        if (cur && pr) {
+          var upTo = [];
+          if (cur.days) upTo = pr.days.slice(0, cur.days.indexOf(today) + 1);
+          else {
+            var pd = new Date(pr.key + '-01T12:00:00'), lim = new Date().getDate();
+            for (var k = 1; k <= lim; k++) {
+              var dd = new Date(pd.getFullYear(), pd.getMonth(), k);
+              if (dd.getMonth() !== pd.getMonth()) break;
+              upTo.push(Domain.formatDate(dd));
+            }
+          }
+          cur.prevIncome = upTo.reduce(function (a, d) { return a + Services.dayMoney(d).total; }, 0);
+        }
+        return L;
+      },
+      fmtNum: function (v) {
+        try { return Number(v).toLocaleString(this.locale(), { maximumFractionDigits: 1 }); } catch (e) { return String(v); }
+      },
+      card: function (kind) {
+        var self = this, list = this.data, money = kind === 'income';
+        var vals = list.map(function (p) { return money ? p.income : p.lessons; });
+        var max = Math.max.apply(null, vals) || 1;
+        var done = list.filter(function (p) { return !p.cur; }).map(function (p) { return money ? p.income : p.lessons; });
+        var avg = done.length >= 2 ? done.reduce(function (a, b) { return a + b; }, 0) / done.length : null;
+        var fmt = money ? function (v) { return UI.formatMoney(Math.round(v)); } : function (v) { return self.fmtNum(Math.round(v * 10) / 10); };
+        var bars = list.map(function (p, i) {
+          var v = vals[i], h = v ? Math.max(4, v / max * 100) : 0;
+          return '<button type="button" class="stc-bar' + (i === self.sel ? ' is-sel' : '') + (p.cur ? ' is-cur' : '') + (v ? '' : ' is-empty') + '" data-stats-bar="' + i + '" aria-label="' + Domain.escapeHtml(p.name + ': ' + (money ? UI.formatMoney(v) : v)) + '">' +
+            '<span class="stc-track"><span class="stc-tip">' + (money ? UI.formatMoney(v) : v) + '</span><span class="stc-col" style="height:' + (v ? h : 3) + '%"></span></span>' +
+            '<span class="stc-lab">' + Domain.escapeHtml(p.lab) + '</span></button>';
+        }).join('');
+        var avgHtml = avg != null && avg > 0
+          ? '<div class="stc-avg" style="bottom:calc(22px + (100% - 22px) * ' + (avg / max).toFixed(4) + ')"><span>' + I18N.t('в среднем') + ' ' + fmt(avg) + '</span></div>' : '';
+        return '<div class="stc" data-stats-card="' + kind + '">' +
+          '<div class="stc-k">' + UI.ic(money ? 'wallet' : 'calendar-event') + I18N.t(money ? 'Доход' : 'Количество занятий') + '</div>' +
+          '<div class="stc-v" data-stc-v></div>' +
+          '<div class="stc-m" data-stc-m></div>' +
+          '<div class="stc-plot">' + avgHtml + '<div class="stc-bars">' + bars + '</div></div>' +
+          '<div class="stc-foot" data-stc-foot></div></div>';
+      },
+      fill: function (animateNum) {
+        var self = this, list = this.data, i = this.sel, p = list[i], prev = list[i - 1];
+        var weekly = this.range === 'week';
+        ['income', 'lessons'].forEach(function (kind) {
+          var card = document.querySelector('[data-stats-card="' + kind + '"]');
+          if (!card) return;
+          var money = kind === 'income';
+          var v = money ? p.income : p.lessons;
+          var vEl = card.querySelector('[data-stc-v]');
+          var fmt = money ? function (x) { return UI.formatMoney(x); } : function (x) { return self.fmtNum(x); };
+          if (animateNum) countTo(vEl, v, fmt); else { vEl._val = v; vEl.textContent = fmt(v); }
+          var m = '<span>' + Domain.escapeHtml(p.name) + '</span>';
+          if (prev) {
+            var partial = money && p.cur && p.prevIncome != null;
+            var pv = partial ? p.prevIncome : (money ? prev.income : prev.lessons);
+            var txt = I18N.t(partial
+              ? (weekly ? 'к тому же дню прошлой недели' : 'к тому же числу прошлого месяца')
+              : (weekly ? 'к прошлой неделе' : 'к прошлому месяцу'));
+            if (pv > 0) {
+              var pct = Math.round((v - pv) / pv * 100);
+              m += '<span class="stc-delta' + (pct > 0 ? ' is-up' : pct < 0 ? ' is-down' : '') + '">' + (pct > 0 ? '+' : pct < 0 ? '−' : '') + Math.abs(pct) + '%</span><span>' + txt + '</span>';
+            }
+          }
+          card.querySelector('[data-stc-m]').innerHTML = m;
+          var foot;
+          if (money) {
+            foot = p.pays
+              ? '<b>' + p.pays + '</b> ' + UI.plural(p.pays, 'оплата', 'оплаты', 'оплат') + ' · ' + I18N.t('средний чек') + ' <b>' + UI.formatMoney(Math.round(p.income / p.pays)) + '</b>'
+              : I18N.t('нет оплат');
+          } else {
+            foot = p.ahead
+              ? I18N.t('проведено') + ' <b>' + (p.lessons - p.ahead) + '</b> · ' + I18N.t('впереди') + ' <b>' + p.ahead + '</b>'
+              : '<b>' + p.people + '</b> ' + UI.plural(p.people, 'ученик', 'ученика', 'учеников');
+          }
+          card.querySelector('[data-stc-foot]').innerHTML = foot;
+          card.querySelectorAll('.stc-bar').forEach(function (b) { b.classList.toggle('is-sel', +b.dataset.statsBar === i); });
+        });
+      },
+      render: function (enter) {
+        var grid = UI.$('statsGrid');
+        if (!grid) return;
+        this.data = this.compute();
+        if (this.sel == null || this.sel >= this.data.length || this._range !== this.range) this.sel = this.data.length - 1;
+        this._range = this.range;
+        if (!State.classes.length && !(State.incomes || []).length) {
+          grid.innerHTML = '<div class="stats-empty">' + UI.ic('chart-bar') + I18N.t('Статистика появится, когда в расписании будут занятия') + '</div>';
+          stagger([grid.firstChild], { dy: 10 });
+          return;
+        }
+        grid.innerHTML = this.card('income') + this.card('lessons');
+        this.fill(enter);
+        if (enter) this.enter();
+      },
+      enter: function () {
+        var cards = document.querySelectorAll('#statsGrid .stc');
+        stagger(cards, { dy: 12, dur: 420, step: 70 });
+        cards.forEach(function (card, ci) {
+          card.querySelectorAll('.stc-col').forEach(function (c, i) {
+            anim(c, [{ transform: 'scaleY(0.02)' }, { transform: 'none' }], { duration: 620, delay: 120 + ci * 70 + i * 32, easing: EASE, fill: 'backwards' });
+          });
+          var avg = card.querySelector('.stc-avg');
+          anim(avg, [{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: 520 + ci * 70, fill: 'backwards' });
+        });
+      }
+    };
+    UI.renderStats = function () { Stats.render(false); };
+
+    document.addEventListener('click', function (e) {
+      var r = e.target.closest && e.target.closest('[data-stats-range]');
+      if (r) {
+        if (Stats.range === r.dataset.statsRange) return;
+        Stats.range = r.dataset.statsRange;
+        document.querySelectorAll('[data-stats-range]').forEach(function (b) { b.classList.toggle('active', b === r); });
+        Stats.render(true);
+        return;
+      }
+      var b = e.target.closest && e.target.closest('[data-stats-bar]');
+      if (b) {
+        var i = +b.dataset.statsBar;
+        if (i === Stats.sel) return;
+        Stats.sel = i;
+        Stats.fill(true);
+        document.querySelectorAll('#statsGrid .stc-bar.is-sel .stc-col').forEach(function (c) {
+          anim(c, [{ transform: 'scaleY(0.92)' }, { transform: 'none' }], { duration: 360, easing: EASE });
+        });
+        document.querySelectorAll('#statsGrid [data-stc-m], #statsGrid [data-stc-foot]').forEach(function (el) {
+          anim(el, [{ opacity: 0, filter: 'blur(3px)', transform: 'translateY(3px)' }, { opacity: 1, filter: 'none', transform: 'none' }], { duration: 280, easing: EASE });
+        });
+      }
+    });
+
+    var lastDesk = isDesk();
+    window.addEventListener('resize', function () {
+      if (isDesk() === lastDesk) return;
+      lastDesk = isDesk();
+      if (State.settingsTab === 'stats') Stats.render(false);
+    });
   })();
 
   window.DanceTrainer = { CONFIG: CONFIG, Storage: Storage, State: State, Domain: Domain, Auth: Auth, Cloud: Cloud, Services: Services, Sub: Sub, UI: UI, Controllers: Controllers, I18N: I18N, Tour: Tour };
