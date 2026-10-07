@@ -3234,7 +3234,7 @@
                 подсчёт денег, оплата, …).
        МИНОР  — мелкие доработки; ПОДНИМАТЬ на 1 при КАЖДОЙ новой выкладке.
        В интерфейсе называется «версия», не «сборка». */
-    BUILD: '0.4.18',
+    BUILD: '0.4.19',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -4829,6 +4829,7 @@
       });
       out.classes = list(data.classes, function (c) {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(String(c.date)) || !/^\d{1,2}:\d{2}$/.test(String(c.time))) return false;
+        if (c.duration != null) c.duration = Math.min(600, Math.max(5, parseInt(c.duration, 10) || 60));
         c.clientIds = ids(c.clientIds);
         c.payments = keys(c.payments);
         ref(c, 'clubGroupId');
@@ -5988,7 +5989,7 @@
      * login.yandex.ru/info, клиенту доверять нельзя). Дальше работает уже
      * наш собственный токен, поэтому яндексовый нигде не хранится.
      */
-    async handleYandexRedirect() {
+    async handleYandexRedirect(opts) {
       var hash = window.location.hash || '';
       if (hash.indexOf('access_token=') === -1) return false;
       var params = {};
@@ -6001,6 +6002,20 @@
       }
       var accessToken = params.access_token;
       if (!accessToken) return false;
+
+      /* state обязан совпасть с тем, что мы сохранили перед уходом на
+         oauth.yandex.ru. Без этой проверки чужая ссылка вида
+         #access_token=<токен злоумышленника> молча входила в ЧУЖОЙ аккаунт,
+         и синхронизация могла отправить туда данные тренера.
+         Доверяем без state только вызову из нативного окна входа Android. */
+      var expected = null;
+      try { expected = sessionStorage.getItem('ya_oauth_state'); sessionStorage.removeItem('ya_oauth_state'); } catch (e) {}
+      var trusted = !!(opts && opts.trusted);
+      if (!trusted && (!params.state || !expected || params.state !== expected)) {
+        console.warn('[handleYandexRedirect] state не совпал — вход отклонён');
+        UI.showToast('Вход через Яндекс не подтверждён. Нажмите «Войти через Яндекс» ещё раз');
+        return null;
+      }
 
       var res = await Api.post('/api/login/yandex', { accessToken: accessToken });
       if (!res.ok) {
@@ -9158,7 +9173,7 @@
         '" style="top:' + top + 'px;height:' + height + 'px;z-index:' + z +
         (split ? ';--col:' + col.col + ';--cols:' + col.cols : '') + '">' +
         titleHtml +
-        '<div class="time-class-head"><div class="time-class-time">' + cls.time + '<small>' + (cls.duration || 60) + ' ' + I18N.t('мин') + '</small></div>' + countHtml + '</div>' +
+        '<div class="time-class-head"><div class="time-class-time">' + cls.time + '<small>' + (parseInt(cls.duration, 10) || 60) + ' ' + I18N.t('мин') + '</small></div>' + countHtml + '</div>' +
         '<div class="time-class-clients">' + namesHtml + '</div>' +
         notesHtml + '</div>';
     },
@@ -13092,7 +13107,8 @@
         window.__yaDeepLinkBound = true;
         window.Capacitor.Plugins.App.addListener('appUrlOpen', function (data) {
           var t = Auth.parseTokenFromUrl(data && data.url);
-          if (t && window.__onYandexToken) window.__onYandexToken(t, '');
+          var st = ((data && data.url || '').match(/[#?&]state=([^&]+)/) || [])[1] || '';
+          if (t && window.__onYandexToken) window.__onYandexToken(t, '', decodeURIComponent(st));
         });
       }
     } catch (e) { console.warn('OAuth deep link listener', e); }
@@ -13149,12 +13165,17 @@
     }
   };
 
-  window.__onYandexToken = async function (token, expiresIn) {
+  /* Два вызова: из нативного окна входа Android (два аргумента — доверенный
+     путь, ссылку туда не подсунуть) и из deep link (третий аргумент — state
+     из ссылки, проверяется как при обычном возврате в браузер). */
+  window.__onYandexToken = async function (token, expiresIn, state) {
     if (!token) { UI.showToast('Токен не получен'); return; }
+    var trusted = arguments.length < 3;
     try {
       window.location.hash = 'access_token=' + encodeURIComponent(token) +
-        (expiresIn ? '&expires_in=' + encodeURIComponent(expiresIn) : '');
-      var user = await Auth.handleYandexRedirect();
+        (expiresIn ? '&expires_in=' + encodeURIComponent(expiresIn) : '') +
+        (state ? '&state=' + encodeURIComponent(state) : '');
+      var user = await Auth.handleYandexRedirect({ trusted: trusted });
       if (user) {
         Auth.recordConsentIfNew(user);
         await enterApp(user);
@@ -13272,7 +13293,7 @@
 
       var esc = Domain.escapeHtml, html = '';
       if (pick) {
-        var st0 = toMin(pick.time), dur = pick.duration || 60;
+        var st0 = toMin(pick.time), dur = parseInt(pick.duration, 10) || 60;
         var label = kind === 'now' ? 'Сейчас идёт' : (kind === 'next' ? 'Следующее занятие' : 'Первое занятие');
         var inTxt = kind === 'next' ? I18N.t('через') + ' <b>' + delta(st0 - mins) + '</b> · ' + dur + ' ' + I18N.t('мин')
           : kind === 'now' ? I18N.t('ещё') + ' <b>' + delta(st0 + dur - mins) + '</b> · ' + I18N.t('до') + ' ' + endOf(pick)
@@ -13437,7 +13458,7 @@
           var done = c.date < today || (c.date === today && en <= mins);
           var isNext = c.id === nextId;
           html += '<button type="button" class="wb-ev' + (done ? ' is-done' : '') + (isNext ? ' is-next' : '') + '" data-action="class-open" data-id="' + c.id + '">' +
-            '<span class="wb-t">' + c.time + '<small>' + (c.duration || 60) + ' ' + I18N.t('мин') + '</small></span>' +
+            '<span class="wb-t">' + c.time + '<small>' + (parseInt(c.duration, 10) || 60) + ' ' + I18N.t('мин') + '</small></span>' +
             '<span class="wb-who">' + esc(who) + '</span>' +
             (isNext ? '<span class="wb-s">' + I18N.t('Следующее') + '</span>' : (chip ? '<span class="wb-s ' + chipCls + '">' + chip + '</span>' : '')) +
           '</button>';
@@ -13613,7 +13634,8 @@
         window.__yaDeepLinkBound = true;
         Capacitor.Plugins.App.addListener('appUrlOpen', function (data) {
           var token = window.DanceTrainer && DanceTrainer.Auth.parseTokenFromUrl(data && data.url);
-          if (token && window.__onYandexToken) window.__onYandexToken(token, '');
+          var st = ((data && data.url || '').match(/[#?&]state=([^&]+)/) || [])[1] || '';
+          if (token && window.__onYandexToken) window.__onYandexToken(token, '', decodeURIComponent(st));
         });
       } catch (e) { console.warn('OAuth deep link listener', e); }
     };

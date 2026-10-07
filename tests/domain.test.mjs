@@ -94,6 +94,18 @@ test('sanitizeData: id с разметкой отбрасывается вмес
   assert.equal(r.dropped, 2);
 });
 
+test('sanitizeData: длительность из внешних данных становится числом', () => {
+  const r = plain(Domain.sanitizeData({
+    classes: [
+      { id: 'c1', date: '2026-10-06', time: '10:00', duration: '<img src=x onerror=alert(1)>' },
+      { id: 'c2', date: '2026-10-06', time: '11:00', duration: '90' },
+      { id: 'c3', date: '2026-10-06', time: '12:00', duration: 99999 },
+      { id: 'c4', date: '2026-10-06', time: '13:00' }
+    ]
+  }));
+  assert.deepEqual(r.classes.map((c) => c.duration), [60, 90, 600, undefined]);
+});
+
 test('escapeHtml экранирует обе кавычки', () => {
   assert.equal(Domain.escapeHtml(`a"b'c<d>&`), 'a&quot;b&#39;c&lt;d&gt;&amp;');
 });
