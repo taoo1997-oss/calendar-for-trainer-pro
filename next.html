@@ -3364,7 +3364,7 @@
                 подсчёт денег, оплата, …).
        МИНОР  — мелкие доработки; ПОДНИМАТЬ на 1 при КАЖДОЙ новой выкладке.
        В интерфейсе называется «версия», не «сборка». */
-    BUILD: '0.4.20',
+    BUILD: '0.4.21',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -12766,7 +12766,13 @@
         for (var i = 0; i < candidates.length; i++) {
           if (!candidates[i]) continue;
           var r = candidates[i].getBoundingClientRect();
-          if (r.width > 4 && r.height > 4) { homeMark = candidates[i]; hr = r; break; }
+          /* Лететь можно только к знаку, который реально виден на экране.
+             В новом облике меню на ПК спрятано за правым краем — раньше
+             знак улетал туда, за экран. */
+          var seen = r.width > 4 && r.height > 4 && r.left >= 0 && r.top >= 0 &&
+            r.right <= window.innerWidth && r.bottom <= window.innerHeight &&
+            (!candidates[i].checkVisibility || candidates[i].checkVisibility({ visibilityProperty: true, opacityProperty: true }));
+          if (seen) { homeMark = candidates[i]; hr = r; break; }
         }
 
         var mr = mark && mark.getBoundingClientRect();
@@ -12798,8 +12804,30 @@
           setTimeout(remove, 1050);
           // страховка: если remove не вызовется, знак всё равно вернётся
           setTimeout(unhideHome, 1900);
+        } else if (!reduce && sp.animate) {
+          /* Знаку некуда лететь: он чуть приближается и растворяется,
+             фон гаснет следом, а карточки экрана въезжают по очереди. */
+          var logo = document.getElementById('splashLogo');
+          var bg = sp.querySelector('.splash-bg');
+          if (mark) mark.style.animation = 'none';
+          var sn2 = sp.querySelector('.splash-name');
+          if (sn2) sn2.style.animation = 'none';
+          var ease = 'cubic-bezier(0.23, 1, 0.32, 1)';
+          sp.style.pointerEvents = 'none';
+          if (logo) logo.animate([
+            { opacity: 1, transform: 'none', filter: 'blur(0px)' },
+            { opacity: 0, transform: 'scale(1.08)', filter: 'blur(6px)' }
+          ], { duration: 560, easing: 'cubic-bezier(0.33, 0, 0.2, 1)', fill: 'forwards' });
+          if (bg) {
+            bg.style.transition = 'none';
+            bg.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 520, delay: 120, easing: 'ease', fill: 'forwards' });
+          }
+          setTimeout(function () { try { if (UI._enterActive) UI._enterActive(); } catch (e) {} }, 180);
+          setTimeout(remove, 680);
         } else {
           sp.classList.add('hide');
+          var lg = document.getElementById('splashLogo');
+          if (lg) { lg.style.transition = 'opacity 0.3s ease'; lg.style.opacity = '0'; }
           setTimeout(remove, 720);
         }
       }
@@ -13863,6 +13891,21 @@
       items.sort(function (a, b) { return a.getBoundingClientRect().top - b.getBoundingClientRect().top || a.getBoundingClientRect().left - b.getBoundingClientRect().left; });
       stagger(items, { dx: dir * 14, dy: 8, dur: 380, step: 30, max: 14 });
     }
+    /* Вход первого экрана после заставки */
+    UI._enterActive = function () {
+      var sec = document.querySelector('.section.active');
+      if (!sec) return;
+      if (sec.dataset.screen === 'settings') {
+        var g = document.querySelector('.settings-group.active');
+        stagger([document.querySelector('.settings-tabs-bar')], { dy: 6, dur: 300 });
+        if (g) enterGroup(g, 0, 40);
+      } else enterSection(sec, 0);
+      document.querySelectorAll('.header, .bottom-nav').forEach(function (el) {
+        if (isDesk() && el.classList.contains('bottom-nav')) return;
+        anim(el, [{ opacity: 0, transform: el.classList.contains('header') ? 'translateY(-8px)' : 'translateY(16px)' }, { opacity: 1, transform: 'none' }],
+          { duration: 420, easing: EASE, fill: 'backwards' });
+      });
+    };
     var switchTab = UI.switchTab;
     UI.switchTab = function (tab) {
       var prev = curTab;
