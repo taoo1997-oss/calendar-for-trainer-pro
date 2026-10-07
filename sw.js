@@ -20,7 +20,7 @@
 
 /* Версию поднимать при каждой выкладке. Смена имени кэша — это и есть
    команда «выброси всё старое»: activate вычистит прежние хранилища. */
-const CACHE = 'cc-0.4.17';
+const CACHE = 'cc-0.4.18';
 
 /* Оболочка: то, без чего приложение не откроется офлайн. */
 const SHELL = [
@@ -69,17 +69,24 @@ self.addEventListener('fetch', (event) => {
     url.pathname.endsWith('/index.html');
 
   if (isPage) {
+    /* Каждая страница хранится под своим адресом. Раньше любая открытая
+       страница (legal/terms.html, next.html) ложилась в кэш как
+       index.html — и без сети вместо приложения открывалась она. */
+    const isApp = url.pathname.endsWith('/') || url.pathname.endsWith('/index.html');
+    const key = isApp ? './index.html' : url.pathname;
     event.respondWith(
       fetch(req)
         .then((res) => {
           /* Свежую страницу кладём в кэш — она пригодится офлайн. */
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put('./index.html', copy)).catch(() => {});
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(key, copy)).catch(() => {});
+          }
           return res;
         })
         .catch(() =>
           /* Сети нет — работаем тем, что сохранили в прошлый раз. */
-          caches.match('./index.html').then((r) => r || caches.match('./'))
+          caches.match(key).then((r) => r || caches.match('./index.html')).then((r) => r || caches.match('./'))
         )
     );
     return;
