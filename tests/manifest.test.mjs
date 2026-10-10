@@ -24,10 +24,21 @@ import { dirname, join } from 'node:path';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(HERE, '..', 'index.html'), 'utf8');
 
+/* Манифест и значки — настоящие файлы по https-адресу, а не data:-ссылка.
+   WebAPK на Android собирает сервер Google: ему нужно скачать манифест по
+   URL, а data:-ссылку он скачать не может, и Chrome молча делает вместо
+   приложения простой ярлык. */
 function manifest() {
-  const m = html.match(/data:application\/manifest\+json;base64,([A-Za-z0-9+/=]+)/);
-  assert.ok(m, 'манифест должен быть встроен как data:application/manifest+json;base64');
-  return JSON.parse(Buffer.from(m[1], 'base64').toString('utf8'));
+  const m = html.match(/<link rel="manifest" href="([^"]+)"/);
+  assert.ok(m, 'в index.html нет <link rel="manifest">');
+  assert.strictEqual(m[1], '/manifest.webmanifest', 'манифест должен отдаваться файлом, а не data:-ссылкой');
+  const j = JSON.parse(readFileSync(join(HERE, '..', 'manifest.webmanifest'), 'utf8'));
+  return j;
+}
+
+function icon(i) {
+  assert.ok(i.src.startsWith('/icons/'), 'значок должен быть файлом в /icons/: ' + i.src);
+  return readFileSync(join(HERE, '..', i.src.slice(1)));
 }
 
 test('манифест разбирается и содержит обязательные поля', () => {
@@ -57,7 +68,7 @@ test('набор значков — тот, с которым Chrome собир�
   );
   for (const i of j.icons) {
     assert.strictEqual(i.type, 'image/png');
-    assert.ok(i.src.startsWith('data:image/png;base64,'), 'значок должен быть встроенным PNG');
+    assert.strictEqual(icon(i).slice(1, 4).toString('ascii'), 'PNG', 'значок должен быть настоящим PNG-файлом');
   }
 });
 
@@ -65,7 +76,7 @@ test('фон заставки совпадает с фоном значка — 
   const j = manifest();
   // Системная заставка обрезает значок круглой маской. Круг не виден только
   // тогда, когда background_color в точности равен фону самой картинки.
-  const png = Buffer.from(j.icons[1].src.split(',')[1], 'base64');
+  const png = icon(j.icons[1]);
   assert.strictEqual(png.slice(1, 4).toString('ascii'), 'PNG', 'значок 512 должен быть PNG');
   // Цвет светлой темы «Снег». Фон иконок перекрашен в него же — см. recolor.
   assert.strictEqual(j.background_color.toLowerCase(), '#fcfbff');
