@@ -29,7 +29,7 @@ function extractMethod(src, name) {
   throw new Error('Не закрыт метод ' + name);
 }
 
-const names = ['timeToMinutes', 'overlapColumns', 'formatPhoneInput', 'escapeHtml', 'isValidPhone', 'isSafeId', 'sanitizeData'];
+const names = ['timeToMinutes', 'overlapColumns', 'dayBreaks','formatPhoneInput', 'escapeHtml', 'isValidPhone', 'isSafeId', 'sanitizeData'];
 const ctx = {};
 vm.createContext(ctx);
 vm.runInContext('var Domain = {\n' + names.map((n) => extractMethod(html, n)).join(',\n') + '\n};', ctx);
@@ -37,6 +37,27 @@ const Domain = ctx.Domain;
 
 const cls = (time, duration) => ({ time, duration });
 const plain = (v) => JSON.parse(JSON.stringify(v));
+
+test('dayBreaks: промежуток между занятиями виден как перерыв', () => {
+  assert.deepEqual(plain(Domain.dayBreaks([cls('12:00', 60), cls('10:00', 60), cls('14:30', 45)])),
+    [{ start: 660, end: 720, minutes: 60 }, { start: 780, end: 870, minutes: 90 }]);
+});
+
+test('dayBreaks: встык и внахлёст — без перерыва, короче 15 минут — тоже', () => {
+  assert.deepEqual(plain(Domain.dayBreaks([cls('10:00', 60), cls('11:00', 60), cls('11:30', 60), cls('12:40', 30)])), []);
+});
+
+test('dayBreaks: длинное занятие перекрывает короткое внутри себя', () => {
+  // 10:00–13:00 и 11:00–11:30: перерыв считается от 13:00, а не от 11:30
+  assert.deepEqual(plain(Domain.dayBreaks([cls('10:00', 180), cls('11:00', 30), cls('14:00', 60)])),
+    [{ start: 780, end: 840, minutes: 60 }]);
+});
+
+test('dayBreaks: пустой день и одно занятие — перерывов нет', () => {
+  assert.deepEqual(plain(Domain.dayBreaks([])), []);
+  assert.deepEqual(plain(Domain.dayBreaks(null)), []);
+  assert.deepEqual(plain(Domain.dayBreaks([cls('09:00')])), []);
+});
 
 test('overlapColumns: занятия без пересечений — по одному на всю ширину', () => {
   assert.deepEqual(plain(Domain.overlapColumns([cls('10:00', 60), cls('11:00', 60)])),

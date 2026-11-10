@@ -2037,56 +2037,157 @@
     .day-summary h3 { font-family: var(--font-display); font-size: 19px; font-weight: 700; letter-spacing: -0.025em; color: var(--text); }
     .day-summary span { font-size: 14px; font-weight: 600; color: var(--text-muted); }
 
-    #dayClasses .time-grid {
+    [data-cal-style="cards"] #dayClasses .time-grid {
       height: auto !important; padding: 0; overflow: hidden;
       background: var(--card); border-radius: 24px; box-shadow: none;
     }
-    #dayClasses .time-slot, #dayClasses .now-line { display: none !important; }
-    #dayClasses .time-events { position: static !important; display: block; pointer-events: auto; }
-    #dayClasses .time-class {
+    [data-cal-style="cards"] #dayClasses .time-slot, [data-cal-style="cards"] #dayClasses .now-line { display: none !important; }
+    [data-cal-style="cards"] #dayClasses .time-events { position: static !important; display: block; pointer-events: auto; }
+    [data-cal-style="cards"] #dayClasses .time-class {
       position: relative !important; top: auto !important; left: auto !important; right: auto !important;
       width: auto !important; height: auto !important; z-index: auto !important;
       display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; column-gap: 12px; row-gap: 2px; align-items: center;
       padding: 14px 16px; margin: 0; border-radius: 0; overflow: visible;
       background: transparent; box-shadow: none;
     }
-    #dayClasses .time-class:active { transform: none; background: var(--surface-2); }
-    #dayClasses .time-class + .time-class::before {
+    [data-cal-style="cards"] #dayClasses .time-class:active { transform: none; background: var(--surface-2); }
+    [data-cal-style="cards"] #dayClasses .time-class + .time-class::before {
       content: ''; position: absolute; top: 0; left: 92px; right: 0; border-top: 1px solid var(--hairline);
     }
-    #dayClasses .time-class-head { display: contents; }
-    #dayClasses .time-class-time {
+    [data-cal-style="cards"] #dayClasses .time-class-head { display: contents; }
+    [data-cal-style="cards"] #dayClasses .time-class-time {
       grid-column: 1; grid-row: 1 / span 4; align-self: center;
       font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: -0.02em; color: var(--text);
     }
-    #dayClasses .time-class-time small { display: block; font-family: var(--font); font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--text-muted); margin-top: 2px; }
-    #dayClasses .time-class-paid-count {
+    [data-cal-style="cards"] #dayClasses .time-class-time small { display: block; font-family: var(--font); font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--text-muted); margin-top: 2px; }
+    [data-cal-style="cards"] #dayClasses .time-class-paid-count {
       grid-column: 3; grid-row: 1 / span 4; align-self: center;
       font-size: 12px; font-weight: 700; padding: 6px 10px; border-radius: 10px;
       background: var(--surface-2); color: var(--text-2);
     }
-    #dayClasses .time-class.paid-all .time-class-paid-count { background: var(--ok-bg); color: var(--ok); }
-    #dayClasses .time-class.has-unpaid .time-class-paid-count { background: var(--warn-bg); color: var(--warn); }
-    #dayClasses .time-class.club-group .time-class-paid-count { background: var(--primary-light); color: var(--primary-ink); }
-    #dayClasses .time-class-title, #dayClasses .time-class-clients, #dayClasses .time-class-notes { grid-column: 2; min-width: 0; }
-    #dayClasses .time-class-title { font-size: 16px; font-weight: 650; margin: 0; }
+    [data-cal-style="cards"] #dayClasses .time-class.paid-all .time-class-paid-count { background: var(--ok-bg); color: var(--ok); }
+    [data-cal-style="cards"] #dayClasses .time-class.has-unpaid .time-class-paid-count { background: var(--warn-bg); color: var(--warn); }
+    [data-cal-style="cards"] #dayClasses .time-class.club-group .time-class-paid-count { background: var(--primary-light); color: var(--primary-ink); }
+    [data-cal-style="cards"] #dayClasses .time-class-title, [data-cal-style="cards"] #dayClasses .time-class-clients, [data-cal-style="cards"] #dayClasses .time-class-notes { grid-column: 2; min-width: 0; }
+    [data-cal-style="cards"] #dayClasses .time-class-title { font-size: 16px; font-weight: 650; margin: 0; }
     /* Несколько учеников в одном занятии: имена переносятся на новую строку,
        а не наезжают друг на друга. Раньше стоял nowrap + overflow:hidden:
        флекс сжимал плашки, а текст внутри вылезал за их границы и ложился
        поверх соседа. Теперь длинное имя обрезается многоточием в своей плашке. */
-    #dayClasses .time-class-clients { flex-wrap: wrap; overflow: visible; gap: 3px 14px; align-items: flex-start; }
-    #dayClasses .name-chip { min-width: 0; max-width: 100%; }
-    #dayClasses .time-class:not(:has(.time-class-title)) .name-chip { font-size: 16px; font-weight: 650; }
-    #dayClasses .time-class:has(.time-class-title) .time-class-clients { color: var(--text-muted); }
-    #dayClasses .time-class:has(.time-class-title) .name-chip { font-weight: 500; color: var(--text-muted); }
-    #dayClasses .time-class.club-group .time-class-time { color: var(--text); }
-    #dayClasses .time-class.is-done { opacity: 0.45; }
-    #dayClasses .time-class.is-next .time-class-time { color: var(--primary-ink); }
-    #dayClasses .time-class.is-now { background: color-mix(in srgb, var(--primary) 8%, transparent); }
+    [data-cal-style="cards"] #dayClasses .time-class-clients { flex-wrap: wrap; overflow: visible; gap: 3px 14px; align-items: flex-start; }
+    [data-cal-style="cards"] #dayClasses .name-chip { min-width: 0; max-width: 100%; }
+    [data-cal-style="cards"] #dayClasses .time-class:not(:has(.time-class-title)) .name-chip { font-size: 16px; font-weight: 650; }
+    [data-cal-style="cards"] #dayClasses .time-class:has(.time-class-title) .time-class-clients { color: var(--text-muted); }
+    [data-cal-style="cards"] #dayClasses .time-class:has(.time-class-title) .name-chip { font-weight: 500; color: var(--text-muted); }
+    [data-cal-style="cards"] #dayClasses .time-class.club-group .time-class-time { color: var(--text); }
+    [data-cal-style="cards"] #dayClasses .time-class.is-done { opacity: 0.45; }
+    [data-cal-style="cards"] #dayClasses .time-class.is-next .time-class-time { color: var(--primary-ink); }
+    [data-cal-style="cards"] #dayClasses .time-class.is-now { background: color-mix(in srgb, var(--primary) 8%, transparent); }
     #dayClasses > .empty { background: var(--card); border-radius: 24px; padding: 34px 20px; }
     .day-total { border-radius: 24px; margin-top: 10px; padding-right: 16px; }
     .day-total-sum { font-size: 20px; }
     .day-foot .link-btn { font-size: 14px; }
+
+    /* ── Ежедневник: время слева, занятия стоят по своим часам ─────────
+       Видно, где перерыв и сколько он длится. Тот же графит и лайм:
+       карточка-подложка, цифры Unbounded, следующее занятие — лаймом. */
+    :root:not([data-cal-style="cards"]) #dayClasses .time-grid {
+      background: var(--card); border-radius: 24px; box-shadow: none; padding: 10px 0;
+    }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-slot::before { left: 62px; border-top: 1px solid var(--hairline); }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-slot::after { left: 62px; right: 14px; border-top: 1px dashed color-mix(in srgb, var(--hairline) 70%, transparent); }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-label {
+      width: 62px; padding: 0 12px 0 0; margin-top: -7px;
+      font-family: var(--font-display); font-size: 11px; font-weight: 600; letter-spacing: -0.01em;
+      color: var(--text-muted); font-variant-numeric: tabular-nums;
+    }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-slot:first-child .time-label { margin-top: -7px; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-events { left: 62px; right: 0; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class {
+      left: 2px; right: 12px; gap: 3px; overflow: hidden;
+      padding: 8px 12px 8px 15px; border-radius: 14px;
+      background: var(--surface-2); box-shadow: none;
+    }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-split { left: calc(2px + (100% - 14px) * var(--col) / var(--cols)); right: auto; width: calc((100% - 14px) / var(--cols) - 4px); padding: 8px 8px 8px 13px; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class::before {
+      content: ''; position: absolute; left: 5px; top: 8px; bottom: 8px; width: 3px; border-radius: 3px;
+      background: var(--text-muted); opacity: 0.55;
+    }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.paid-all::before { background: var(--ok); opacity: 1; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.has-unpaid::before { background: var(--warn); opacity: 1; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.club-group::before { background: var(--primary-ink); opacity: 1; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.club-group { background: color-mix(in srgb, var(--primary) 10%, var(--surface-2)); }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class:active { transform: scale(0.98); }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class-time {
+      font-family: var(--font-display); font-weight: 700; font-size: 14px; letter-spacing: -0.02em; color: var(--text);
+      font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class-time small { font-family: var(--font); font-size: 11.5px; font-weight: 500; letter-spacing: 0; color: var(--text-muted); margin-left: 6px; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class-paid-count { font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 8px; background: var(--card); color: var(--text-2); }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.paid-all .time-class-paid-count { background: var(--ok-bg); color: var(--ok); }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.has-unpaid .time-class-paid-count { background: var(--warn-bg); color: var(--warn); }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.club-group .time-class-paid-count { background: var(--primary-light); color: var(--primary-ink); }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.club-group .time-class-time { color: var(--text); }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class-title { font-size: 14px; font-weight: 650; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class-clients { font-size: 13.5px; gap: 2px 12px; }
+    :root:not([data-cal-style="cards"]) #dayClasses .name-chip { min-width: 0; max-width: 100%; font-size: 13.5px; }
+    /* Параллельные занятия делят ширину: время целиком, длительность прячем */
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-split .time-class-time { flex: 0 0 auto; overflow: visible; text-overflow: clip; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-split .time-class-time small { display: none; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-split .time-class-head { flex-wrap: wrap; gap: 2px 6px; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-split .time-class-paid-count { padding: 1px 6px; }
+    /* Короткое занятие (полчаса и меньше): время и имена в одну строку */
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-short { flex-direction: row; align-items: center; gap: 10px; padding-top: 3px; padding-bottom: 3px; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-short::before { top: 6px; bottom: 6px; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-short .time-class-head { flex: 0 0 auto; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-short .time-class-time small,
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-short .time-class-notes { display: none; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-short .time-class-title { order: 2; flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-short .time-class-clients { order: 3; flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; overflow: hidden; margin: 0; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-short .time-class-head { order: 1; }
+    /* Прошедшие тусклее, следующее — лаймом, идущее сейчас — в лаймовой рамке */
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-done { opacity: 0.45; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-next { background: var(--primary); }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-next::before { background: var(--on-primary); opacity: 0.55; }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-next .time-class-time,
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-next .time-class-title,
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-next .time-class-clients,
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-next .name-chip,
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-next .time-class-notes { color: var(--on-primary); }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-next .time-class-time small { color: color-mix(in srgb, var(--on-primary) 60%, transparent); }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-next .time-class-paid-count { background: color-mix(in srgb, var(--on-primary) 12%, transparent); color: var(--on-primary); }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-next .name-chip::before { background: var(--on-primary); }
+    :root:not([data-cal-style="cards"]) #dayClasses .time-class.is-now { background: color-mix(in srgb, var(--primary) 14%, var(--surface-2)); box-shadow: inset 0 0 0 1.5px var(--primary-ink); }
+    :root:not([data-cal-style="cards"]) #dayClasses .now-line { left: 56px; border-top: 2px solid var(--primary-ink); }
+    :root:not([data-cal-style="cards"]) #dayClasses .now-line::before { background: var(--primary-ink); left: -5px; top: -6px; width: 10px; height: 10px; }
+
+    /* Перерыв между занятиями: подпись посередине пустого промежутка */
+    .time-break {
+      position: absolute; left: 2px; right: 12px; z-index: 1; pointer-events: none;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    .time-break span {
+      display: inline-flex; align-items: center; gap: 5px; max-width: 100%;
+      padding: 3px 10px; border-radius: 999px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-size: 11.5px; font-weight: 600; color: var(--text-muted);
+      background: var(--card); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-muted) 28%, transparent);
+    }
+    .time-break .ic { width: 12px; height: 12px; flex: 0 0 auto; }
+    [data-cal-style="cards"] .time-break { display: none; }
+
+    /* Переключатель вида: ежедневник / список */
+    .view-switch { display: inline-flex; padding: 3px; gap: 2px; border-radius: 12px; background: var(--surface-2); flex: 0 0 auto; }
+    .view-switch button {
+      width: 34px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+      border: none; border-radius: 9px; background: none; color: var(--text-muted); cursor: pointer;
+      transition: background-color 160ms ease, color 160ms ease;
+    }
+    .view-switch button .ic { width: 18px; height: 18px; }
+    .view-switch button.is-on { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(8, 10, 16, 0.12); }
+    [data-theme="dark"] .view-switch button.is-on, [data-theme="black"] .view-switch button.is-on { background: var(--surface-3); }
+    .week-nav-actions .view-switch { display: none; margin-right: 6px; }
+    [data-device="desktop"] .week-nav-actions .view-switch { display: inline-flex; }
+    [data-device="desktop"] .day-head .view-switch { display: none; }
 
     /* ── Плавающее нижнее меню и «+» ──────────────────────────────── */
     .bottom-nav {
@@ -2205,6 +2306,69 @@
       transition: border-color 160ms ease, color 160ms ease;
     }
     .wb-add:hover { border-color: var(--primary-ink); color: var(--primary-ink); }
+
+    /* ПК, вид «Ежедневник»: неделя по часам, шкала времени слева */
+    [data-device="desktop"] #weekBoard.is-timeline { display: block; min-height: 0; }
+    .wt {
+      display: grid; grid-template-columns: 58px repeat(7, minmax(0, 1fr));
+      background: var(--card); border-radius: 22px; padding: 8px 10px 14px 0;
+    }
+    .wt-corner { grid-row: 1; grid-column: 1; }
+    .wt-head { padding: 0 4px 8px; min-width: 0; }
+    .wt-head .wb-head { width: 100%; }
+    .wt-head.is-today .wb-dd { color: var(--primary-ink); }
+    .wt-axis { position: relative; grid-column: 1; }
+    .wt-axis span {
+      position: absolute; right: 10px; transform: translateY(-50%);
+      font-family: var(--font-display); font-size: 11px; font-weight: 600; letter-spacing: -0.01em;
+      color: var(--text-muted); font-variant-numeric: tabular-nums;
+    }
+    .wt-axis span:first-child { transform: none; }
+    .wt-day {
+      position: relative; min-width: 0; cursor: copy;
+      border-left: 1px solid var(--hairline);
+      background-image:
+        repeating-linear-gradient(to bottom, var(--hairline) 0 1px, transparent 1px var(--wt-h)),
+        repeating-linear-gradient(to bottom, transparent 0 calc(var(--wt-h) / 2), color-mix(in srgb, var(--hairline) 55%, transparent) calc(var(--wt-h) / 2) calc(var(--wt-h) / 2 + 1px), transparent calc(var(--wt-h) / 2 + 1px) var(--wt-h));
+      transition: background-color 160ms ease;
+    }
+    .wt-day:hover { background-color: color-mix(in srgb, var(--text) 2.5%, transparent); }
+    .wt-day.is-today { background-color: color-mix(in srgb, var(--primary) 6%, transparent); }
+    .wt-day.is-selected:not(.is-today) { background-color: color-mix(in srgb, var(--text) 3%, transparent); }
+    .wb-ev.wt-ev {
+      position: absolute; left: calc(4px + (100% - 8px) * var(--col, 0) / var(--cols, 1)); width: calc((100% - 8px) / var(--cols, 1) - 3px);
+      gap: 2px; padding: 6px 8px 6px 13px; border-radius: 12px; overflow: hidden; z-index: 2; cursor: pointer;
+    }
+    .wb-ev.wt-ev::before {
+      content: ''; position: absolute; left: 4px; top: 7px; bottom: 7px; width: 3px; border-radius: 3px;
+      background: var(--text-muted); opacity: 0.55;
+    }
+    .wb-ev.wt-ev.is-ok::before { background: var(--ok); opacity: 1; }
+    .wb-ev.wt-ev.is-warn::before { background: var(--warn); opacity: 1; }
+    .wb-ev.wt-ev.is-club::before { background: var(--primary-ink); opacity: 1; }
+    .wb-ev.wt-ev.is-next::before { background: var(--on-primary); opacity: 0.55; }
+    .wb-ev.wt-ev .wb-t { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .wb-ev.wt-ev .wb-t small { font-size: 11px; margin-left: 4px; }
+    .wb-ev.wt-ev .wb-who { font-size: 13px; }
+    .wb-ev.wt-ev .wb-s { font-size: 11px; padding: 2px 7px; }
+    .wb-ev.wt-ev.is-short { flex-direction: row; align-items: center; gap: 6px; padding-top: 2px; padding-bottom: 2px; }
+    .wb-ev.wt-ev.is-short .wb-t small, .wb-ev.wt-ev.is-short .wb-s { display: none; }
+    .wb-ev.wt-ev.is-short .wb-who { flex: 1 1 auto; min-width: 0; }
+    .wb-ev.wt-ev.is-short .wb-t { flex: 0 0 auto; max-width: none; overflow: visible; }
+    /* Два занятия в одно время делят колонку: только время и имя */
+    .wb-ev.wt-ev.is-split { padding: 6px 4px 6px 10px; }
+    .wb-ev.wt-ev.is-split::before { left: 3px; }
+    .wb-ev.wt-ev.is-split .wb-t { font-size: 12px; overflow: visible; text-overflow: clip; }
+    .wb-ev.wt-ev.is-split .wb-t small, .wb-ev.wt-ev.is-split .wb-s { display: none; }
+    .wb-ev.wt-ev.is-split .wb-who { font-size: 12px; }
+    .wt-break { position: absolute; left: 4px; right: 4px; z-index: 1; pointer-events: none; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .wt-break span {
+      max-width: 100%; padding: 2px 7px; border-radius: 999px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-size: 10.5px; font-weight: 600; color: var(--text-muted);
+      background: var(--card); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-muted) 28%, transparent);
+    }
+    .wt-now { position: absolute; left: 0; right: 0; height: 0; z-index: 4; pointer-events: none; border-top: 2px solid var(--primary-ink); }
+    .wt-now::before { content: ''; position: absolute; left: -5px; top: -6px; width: 10px; height: 10px; border-radius: 50%; background: var(--primary-ink); }
 
     .debt-h { font-size: 13px; font-weight: 600; color: var(--text-muted); padding: 10px 0 4px; }
     .debt-row {
@@ -2635,6 +2799,10 @@
       <div class="week-nav">
         <button type="button" class="week-nav-title" data-action="open-calendar" aria-label="Выбрать дату"><span id="periodTitle">—</span><svg class="ic" aria-hidden="true"><use href="#i-chevron-down"/></svg></button>
         <div class="week-nav-actions">
+          <div class="view-switch" role="group" aria-label="Вид расписания">
+            <button type="button" data-cal-view="standard" aria-label="Ежедневник" title="Ежедневник"><svg class="ic" aria-hidden="true"><use href="#i-calendar-week"/></svg></button>
+            <button type="button" data-cal-view="cards" aria-label="Список" title="Список"><svg class="ic" aria-hidden="true"><use href="#i-layout-list"/></svg></button>
+          </div>
           <button type="button" class="icon-btn" data-action="copy-week" aria-label="Копировать неделю" title="Копировать неделю"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg></button>
           <button type="button" class="icon-btn" data-action="week-prev" aria-label="Предыдущая неделя"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"/></svg></button>
           <button type="button" class="icon-btn" data-action="week-next" aria-label="Следующая неделя"><svg class="ic" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
@@ -2646,6 +2814,10 @@
       <div class="day-head">
         <div id="selectedDayLabel">Сегодня</div><div id="daySummary" class="day-summary"></div>
         <div class="day-head-actions">
+          <div class="view-switch" role="group" aria-label="Вид расписания">
+            <button type="button" data-cal-view="standard" aria-label="Ежедневник" title="Ежедневник"><svg class="ic" aria-hidden="true"><use href="#i-calendar-week"/></svg></button>
+            <button type="button" data-cal-view="cards" aria-label="Список" title="Список"><svg class="ic" aria-hidden="true"><use href="#i-layout-list"/></svg></button>
+          </div>
         </div>
       </div>
       <div id="dayClasses"></div>
@@ -2819,8 +2991,8 @@
       <div class="settings-block">
         <h2>Стиль календаря</h2>
         <div class="style-options" id="styleOptions">
-          <div class="style-option active" data-style="standard"><strong>Стандартный</strong><span>Решётка времени с деталями</span></div>
-          <div class="style-option" data-style="cards"><strong>Карточки</strong><span>Список занятий крупными карточками</span></div>
+          <div class="style-option active" data-style="standard"><strong>Ежедневник</strong><span>Время слева, видны перерывы между занятиями</span></div>
+          <div class="style-option" data-style="cards"><strong>Список</strong><span>Занятия одной лентой, без шкалы времени</span></div>
         </div>
       </div>
       </div>
@@ -3407,7 +3579,7 @@
                 подсчёт денег, оплата, …).
        МИНОР  — мелкие доработки; ПОДНИМАТЬ на 1 при КАЖДОЙ новой выкладке.
        В интерфейсе называется «версия», не «сборка». */
-    BUILD: '0.4.24',
+    BUILD: '0.4.25',
     STORAGE_KEY: 'dance_trainer_v3',
     USERS_KEY: 'dance_trainer_users_v1',
     /* Свой сервер: аккаунты, подписка и синхронизация данных между
@@ -4248,6 +4420,12 @@
     'Решётка времени с деталями': 'Time grid with details',
     'Карточки': 'Cards',
     'Список занятий крупными карточками': 'Classes as large cards',
+    'Ежедневник': 'Planner',
+    'Время слева, видны перерывы между занятиями': 'Times on the left, breaks between classes visible',
+    'Список': 'List',
+    'Занятия одной лентой, без шкалы времени': 'Classes in one list, no time scale',
+    'Вид расписания': 'Schedule view',
+    'перерыв': 'break',
     'Обучение': 'Tutorial',
     'Пройти обучение заново': 'Replay the tutorial',
     'Короткий тур по разделам приложения — 6 экранов.':
@@ -5173,6 +5351,26 @@
         if (!busy) free.push(Domain.minutesToTime(t));
       }
       return free;
+    },
+    /**
+     * Перерывы дня: промежутки между занятиями от 15 минут.
+     * Занятия, идущие внахлёст, перерыва не дают. Возвращает
+     * [{ start, end, minutes }] в минутах от полуночи, по порядку.
+     */
+    dayBreaks(list, minGap) {
+      var min = minGap == null ? 15 : minGap;
+      var items = (list || []).map(function (c) {
+        var st = Domain.timeToMinutes(c.time);
+        return { st: st, en: st + (parseInt(c.duration, 10) || 60) };
+      }).filter(function (x) { return !isNaN(x.st); })
+        .sort(function (a, b) { return a.st - b.st; });
+      var out = [];
+      var end = null;
+      items.forEach(function (x) {
+        if (end !== null && x.st - end >= min) out.push({ start: end, end: x.st, minutes: x.st - end });
+        if (end === null || x.en > end) end = x.en;
+      });
+      return out;
     },
     classPaymentStatus(cls) {
       // Занятие группы клуба — отдельный синий стиль, без оплаты занятия
@@ -9274,6 +9472,14 @@
         }
         grid += UI.renderClassCard(cls, top, height, cols[i]);
       });
+      // Перерывы: пустой промежуток между занятиями подписан, сколько он длится
+      Domain.dayBreaks(dayClasses).forEach(function (b) {
+        var bTop = ((b.start - dayStartMin) / 60) * hourH;
+        var bH = (b.minutes / 60) * hourH - gap;
+        if (bH < 22) return;
+        grid += '<div class="time-break" style="top:' + bTop + 'px;height:' + bH + 'px;"><span>' +
+          UI.ic('clock') + I18N.t('перерыв') + ' ' + UI.breakLabel(b.minutes) + '</span></div>';
+      });
       grid += '</div></div>';
 
       if (!dayClasses.length) {
@@ -9377,6 +9583,13 @@
         '<div class="day-total-sum">' + UI.formatMoney(m.total) + '</div>' +
       '</div>';
     },
+    /** «30 мин», «1 ч», «1 ч 15 мин» — длина перерыва */
+    breakLabel(m) {
+      m = Math.max(0, Math.round(m));
+      if (m < 60) return m + ' ' + I18N.t('мин');
+      var h = Math.floor(m / 60), r = m % 60;
+      return h + ' ' + I18N.t('ч') + (r ? ' ' + r + ' ' + I18N.t('мин') : '');
+    },
     renderClassCard(cls, top, height, col) {
       var clients = (cls.clientIds || []).map(function (id) { return State.clientById(id); }).filter(Boolean);
       var paidCount = clients.filter(function (c) { return cls.payments && cls.payments[c.id]; }).length;
@@ -9409,7 +9622,7 @@
           : '');
 
       var split = col && col.cols > 1;
-      return '<div class="time-class ' + status + (split ? ' is-split' : '') + '" data-action="class-open" data-id="' + cls.id +
+      return '<div class="time-class ' + status + (split ? ' is-split' : '') + (height < 56 ? ' is-short' : '') + '" data-action="class-open" data-id="' + cls.id +
         '" style="top:' + top + 'px;height:' + height + 'px;z-index:' + z +
         (split ? ';--col:' + col.col + ';--cols:' + col.cols : '') + '">' +
         titleHtml +
@@ -13732,6 +13945,9 @@
       State.classes.filter(function (c) { return c.date === today && toMin(c.time) > mins; })
         .sort(function (a, b) { return a.time.localeCompare(b.time); })
         .slice(0, 1).forEach(function (c) { nextId = c.id; });
+      var timeline = document.documentElement.getAttribute('data-cal-style') !== 'cards';
+      box.classList.toggle('is-timeline', timeline);
+      if (timeline) { box.innerHTML = weekTimelineHtml(today, mins, names, nextId); placeWeekNow(); return; }
       var html = '';
       for (var i = 0; i < 7; i++) {
         var d = Domain.formatDate(Domain.addDays(State.currentWeekStart, i));
@@ -13771,6 +13987,136 @@
       }
       box.innerHTML = html;
     };
+
+    /* ПК, «Ежедневник»: неделя по часам. Диапазон — от первого до последнего
+       занятия недели (не меньше 9:00–18:00 рамки, если неделя пустая). */
+    var WT_H = 64;
+    function boardChip(c) {
+      var clients = (c.clientIds || []).map(function (id) { return State.clientById(id); }).filter(Boolean);
+      var club = c.clubGroupId ? State.clubGroupById(c.clubGroupId) : null;
+      var paid = clients.filter(function (x) { return c.payments && c.payments[x.id]; }).length;
+      var who = c.title || (club ? club.name : (clients.length ? clients.map(function (x) { return x.name; }).join(', ') : I18N.t('Без клиентов')));
+      if (club) return { who: who, chip: I18N.t('Клуб'), cls: 'is-club' };
+      if (!clients.length) return { who: who, chip: '', cls: '' };
+      if (paid === clients.length) return { who: who, chip: I18N.t('Оплачено'), cls: 'is-ok' };
+      if (paid === 0) return { who: who, chip: I18N.t('Ждёт'), cls: 'is-warn' };
+      return { who: who, chip: paid + ' ' + I18N.t('из') + ' ' + clients.length, cls: 'is-warn' };
+    }
+    function weekTimelineHtml(today, mins, names, nextId) {
+      var esc = Domain.escapeHtml;
+      var days = [], startH = null, endH = null;
+      for (var i = 0; i < 7; i++) {
+        var d = Domain.formatDate(Domain.addDays(State.currentWeekStart, i));
+        var list = State.classes.filter(function (c) { return c.date === d; })
+          .sort(function (a, b) { return a.time.localeCompare(b.time); });
+        list.forEach(function (c) {
+          var st = toMin(c.time), en = st + (parseInt(c.duration, 10) || 60);
+          var sh = Math.floor(st / 60), eh = Math.ceil(en / 60);
+          if (startH === null || sh < startH) startH = sh;
+          if (endH === null || eh > endH) endH = eh;
+        });
+        days.push({ date: d, num: Domain.addDays(State.currentWeekStart, i).getDate(), list: list });
+      }
+      if (startH === null) { startH = 9; endH = 18; }
+      startH = Math.max(0, startH); endH = Math.min(24, Math.max(endH, startH + 3));
+      var startMin = startH * 60, H = (endH - startH) * WT_H;
+
+      var html = '<div class="wt" style="--wt-h:' + WT_H + 'px"><div class="wt-corner"></div>';
+      days.forEach(function (day, i) {
+        html += '<div class="wt-head' + (day.date === today ? ' is-today' : '') + '">' +
+          '<button type="button" class="wb-head" data-action="select-day" data-date="' + day.date + '">' +
+            '<span><span class="wb-dn">' + I18N.t(names[i]) + (day.date === today ? ' · ' + I18N.t('сегодня') : '') + '</span>' +
+            '<span class="wb-dd">' + day.num + '</span></span>' +
+            '<span class="wb-n">' + (day.list.length || '') + '</span></button></div>';
+      });
+      html += '<div class="wt-axis" style="height:' + H + 'px">';
+      for (var h = startH; h < endH; h++) {
+        html += '<span style="top:' + ((h - startH) * WT_H) + 'px">' + String(h).padStart(2, '0') + ':00</span>';
+      }
+      html += '</div>';
+      days.forEach(function (day) {
+        var cols = Domain.overlapColumns(day.list);
+        html += '<div class="wt-day' + (day.date === today ? ' is-today' : '') + (day.date === State.selectedDate ? ' is-selected' : '') +
+          '" data-wt-date="' + day.date + '" data-wt-start="' + startH + '" style="height:' + H + 'px">';
+        day.list.forEach(function (c, k) {
+          var st = toMin(c.time), dur = parseInt(c.duration, 10) || 60;
+          var top = (st - startMin) / 60 * WT_H, hgt = Math.max(dur / 60 * WT_H - 3, 20);
+          var en = st + dur;
+          var done = c.date < today || (c.date === today && en <= mins);
+          var isNext = c.id === nextId;
+          var info = boardChip(c);
+          var col = cols[k] || { col: 0, cols: 1 };
+          var short = hgt < 44;
+          html += '<button type="button" class="wb-ev wt-ev ' + info.cls + (done ? ' is-done' : '') + (isNext ? ' is-next' : '') + (short ? ' is-short' : '') + (col.cols > 1 ? ' is-split' : '') +
+            '" data-action="class-open" data-id="' + c.id + '" style="top:' + top + 'px;height:' + hgt + 'px;--col:' + col.col + ';--cols:' + col.cols + '"' +
+            ' title="' + esc(c.time + ' · ' + info.who) + '">' +
+            '<span class="wb-t">' + c.time + '<small>' + dur + ' ' + I18N.t('мин') + '</small></span>' +
+            '<span class="wb-who">' + esc(info.who) + '</span>' +
+            (hgt >= 76 ? (isNext ? '<span class="wb-s">' + I18N.t('Следующее') + '</span>' : (info.chip ? '<span class="wb-s ' + info.cls + '">' + info.chip + '</span>' : '')) : '') +
+          '</button>';
+        });
+        Domain.dayBreaks(day.list).forEach(function (b) {
+          var bTop = (b.start - startMin) / 60 * WT_H, bH = b.minutes / 60 * WT_H - 3;
+          if (bH < 22) return;
+          html += '<div class="wt-break" style="top:' + bTop + 'px;height:' + bH + 'px"><span>' + I18N.t('перерыв') + ' ' + UI.breakLabel(b.minutes) + '</span></div>';
+        });
+        html += '</div>';
+      });
+      return html + '</div>';
+    }
+    /* Линия «сейчас» в колонке сегодняшнего дня */
+    function placeWeekNow() {
+      var col = document.querySelector('#weekBoard .wt-day.is-today');
+      var old = document.querySelector('#weekBoard .wt-now');
+      if (old) old.remove();
+      if (!col) return;
+      var startH = parseInt(col.dataset.wtStart, 10);
+      var now = new Date(), m = now.getHours() * 60 + now.getMinutes();
+      var top = (m - startH * 60) / 60 * WT_H;
+      if (isNaN(top) || top < 0 || top > col.offsetHeight) return;
+      var line = document.createElement('div');
+      line.className = 'wt-now';
+      line.style.top = top + 'px';
+      col.appendChild(line);
+    }
+    setInterval(function () { try { placeWeekNow(); } catch (e) {} }, 60000);
+
+    /* Клик по пустому месту в колонке дня — новое занятие на это время */
+    document.addEventListener('click', function (e) {
+      var day = e.target.closest('.wt-day');
+      if (!day || e.target.closest('.wt-ev')) return;
+      var startH = parseInt(day.dataset.wtStart, 10);
+      var y = e.clientY - day.getBoundingClientRect().top;
+      var m = startH * 60 + Math.floor(y / WT_H * 2) * 30;
+      m = Math.max(0, Math.min(23 * 60 + 30, m));
+      State.selectedDate = day.dataset.wtDate;
+      UI.renderSchedule();
+      Controllers.openClassModal(null);
+      try { UI.setTimePicker(String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0')); } catch (err) {}
+    });
+
+    /* Переключатель вида на экране расписания */
+    function syncViewSwitch() {
+      var cur = document.documentElement.getAttribute('data-cal-style') === 'cards' ? 'cards' : 'standard';
+      document.querySelectorAll('[data-cal-view]').forEach(function (b) {
+        var on = b.dataset.calView === cur;
+        b.classList.toggle('is-on', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-cal-view]');
+      if (!b) return;
+      Controllers.setCalStyle(b.dataset.calView);
+      syncViewSwitch();
+    });
+    var applyThemeOrig = UI.applyTheme;
+    UI.applyTheme = function () {
+      var r = applyThemeOrig.apply(UI, arguments);
+      try { syncViewSwitch(); } catch (e) {}
+      return r;
+    };
+    syncViewSwitch();
 
     /* «+» в пустом дне доски: открыть новое занятие на этот день */
     document.addEventListener('click', function (e) {
@@ -14045,7 +14391,7 @@
     /* ── Смена раздела ───────────────────────────────────────────────── */
     var ORDER = ['schedule', 'clients', 'club', 'settings'];
     var curTab = null, tabAt = 0;
-    var LIST_ITEMS = '#clientsList > *, #clubGroupsList > *, #clubMembersList > *, #weekBoard > .wb-col, #dayClasses .time-class, #dayClasses > .empty';
+    var LIST_ITEMS = '#clientsList > *, #clubGroupsList > *, #clubMembersList > *, #weekBoard > .wb-col, #weekBoard > .wt, #dayClasses .time-class, #dayClasses > .empty';
     function enterSection(sec, dir) {
       if (!sec) return;
       var kids = Array.prototype.filter.call(sec.children, function (k) {
@@ -14200,7 +14546,7 @@
       if (before && weekKey !== before && performance.now() - tabAt > 120) {
         var dir = new Date(State.currentWeekStart) > new Date(before) ? 1 : -1;
         var items = [];
-        document.querySelectorAll('#weekDays > *, #weekBoard > .wb-col').forEach(function (el) { items.push(el); });
+        document.querySelectorAll('#weekDays > *, #weekBoard > .wb-col, #weekBoard .wt-head, #weekBoard .wt-day').forEach(function (el) { items.push(el); });
         stagger(items, { dx: dir * 22, dy: 0, dur: 360, step: 22, max: 14 });
         var t = UI.$('periodTitle');
         anim(t, [{ opacity: 0, filter: 'blur(4px)', transform: 'translateX(' + dir * 10 + 'px)' }, { opacity: 1, filter: 'none', transform: 'none' }], { duration: 300, easing: EASE });
